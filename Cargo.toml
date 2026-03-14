@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "blockchain/wallet-client",
+    "blockchain/contract/contracts/zeb",
+    "blockchain/scripts"
+]
