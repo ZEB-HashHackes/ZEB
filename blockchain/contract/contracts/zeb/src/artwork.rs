@@ -1,12 +1,13 @@
 use soroban_sdk::{contractimpl, Env, Address, BytesN, Map};
 use crate::types::{Artwork, ZebError};
-use crate::storage::{artworks_map, offers_map};
+use crate::storage::{artworks_map, offers_map,save_artwork, save_offer};
+use crate::events;
 
 
 
 pub fn artwork_exists(e: Env, hash: BytesN<32>) -> bool {
     let artworks = artworks_map(&e);
-    artworks.contains_key(&hash)
+    artworks.contains_key(hash.clone())
 }
 
 pub fn register_artwork(
@@ -21,7 +22,7 @@ pub fn register_artwork(
 
     let mut artworks = artworks_map(&e);
 
-    if artworks.contains_key(&hash) {
+    if artworks.contains_key(hash.clone()) {
         return Err(ZebError::ArtworkAlreadyExists);
     }
 
@@ -33,7 +34,7 @@ pub fn register_artwork(
     };
 
     artworks.set(hash.clone(), artwork);
-
+    save_artwork(&e, &artworks);
     // EMIT EVENT
     events::artwork_registered(&e, hash, creator, timestamp);
 
@@ -44,7 +45,7 @@ pub fn register_artwork(
 pub fn get_creator(e: Env, hash: BytesN<32>) -> Result<Address, ZebError> {
     let artworks = artworks_map(&e);
 
-    match artworks.get(&hash) {
+    match artworks.get(hash.clone()) {
         Some(art) => Ok(art.creator),
         None => Err(ZebError::ArtworkNotFound),
     }
@@ -53,7 +54,7 @@ pub fn get_creator(e: Env, hash: BytesN<32>) -> Result<Address, ZebError> {
 pub fn get_owner(e: Env, hash: BytesN<32>) -> Result<Address, ZebError> {
     let artworks = artworks_map(&e);
 
-    match artworks.get(&hash) {
+    match artworks.get(hash.clone()) {
         Some(art) => Ok(art.current_owner),
         None => Err(ZebError::ArtworkNotFound),
     }
@@ -67,7 +68,7 @@ pub fn transfer_ownership(
 
     let mut artworks = artworks_map(&e);
 
-    if !artworks.contains_key(&hash) {
+    if !artworks.contains_key(hash.clone()) {
         return Err(ZebError::ArtworkNotFound);
     }
 
@@ -81,9 +82,9 @@ pub fn transfer_ownership(
     artwork.current_owner = new_owner.clone();
 
     artworks.set(hash.clone(), artwork);
-
+    save_artwork(&e,&artworks);
     // EMIT EVENT
-    events::ownership_transferred(&e, hash, owner, new_owner);
+    events::ownership_transferred(&e, hash.clone(), owner, new_owner);
 
     Ok(())
 }
@@ -94,12 +95,12 @@ pub fn make_offer(e: Env, hash: BytesN<32>, buyer: Address, amount: i128) -> Res
     }
 
     let mut offers_outer = offers_map(&e);
-    let mut inner_map = offers_outer.get(&hash).unwrap_or_else(|| Map::new(&e));
+    let mut inner_map = offers_outer.get(hash.clone()).unwrap_or_else(|| Map::new(&e));
 
     inner_map.set(buyer.clone(), amount);
-    offers_outer.set(hash, inner_map);
-    e.storage().set(&crate::storage::StorageKeys::OFFERS, &offers_outer);
-    events::offer_made(&e, hash, buyer, amount);
+    offers_outer.set(hash.clone(), inner_map);
+    save_offer(&e,&offers_outer);
+    events::offer_made(&e, hash.clone(), buyer, amount);
 
     Ok(())
 }
@@ -108,30 +109,29 @@ pub fn accept_offer(e: Env, hash: BytesN<32>, owner: Address, buyer: Address) ->
     let mut artworks = artworks_map(&e);
     let mut offers_outer = offers_map(&e);
 
-    let mut art = match artworks.get(&hash) {
+    let mut art = match artworks.get(hash.clone()) {
         Some(a) => a,
         None => return Err(ZebError::ArtworkNotFound),
     };
 
     if art.current_owner != owner {
-        return Err(ZebError::NotArtworkOwner);
+        return Err(ZebError::NotOwner);
     }
 
-    let mut inner_map = offers_outer.get(&hash).unwrap_or_else(|| Map::new(&e));
-    let amount = match inner_map.get(&buyer) {
+    let mut inner_map = offers_outer.get(hash.clone()).unwrap_or_else(|| Map::new(&e));
+    let amount = match inner_map.get(buyer.clone()) {
         Some(a) => a,
         None => return Err(ZebError::InvalidOffer),
     };
 
     art.current_owner = buyer.clone();
     artworks.set(hash.clone(), art);
-    e.storage().set(&crate::storage::StorageKeys::ARTWORKS, &artworks);
+    save_artwork(&e,&artworks);
+    inner_map.remove(buyer.clone());
+    offers_outer.set(hash.clone(), inner_map);
+    save_offer(&e, &offers_outer);
 
-    inner_map.remove(&buyer);
-    offers_outer.set(hash, inner_map);
-    e.storage().set(&crate::storage::StorageKeys::OFFERS, &offers_outer);
-
-    events::offer_accepted(&e, hash, buyer, amount);
+    events::offer_accepted(&e, hash.clone(), buyer, amount);
 
     Ok(amount)
 }

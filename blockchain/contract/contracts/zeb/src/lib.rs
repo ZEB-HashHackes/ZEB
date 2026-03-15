@@ -1,8 +1,12 @@
 use soroban_sdk::{contract, contractimpl, Env, Address, BytesN};
 
+#[cfg(test)]
+mod test;
+
 mod types;
 mod storage;
 mod artwork;
+mod events;
 
 use crate::types::ZebError;
 use crate::artwork as artwork_logic;
@@ -41,7 +45,7 @@ impl ZebContract {
         new_owner: Address
     ) -> Result<(), ZebError> {
         caller.require_auth();
-        artwork_logic::transfer_ownership(e, hash, caller, new_owner)
+        artwork_logic::transfer_ownership(e, hash, new_owner)
     }
 
     pub fn make_offer(
