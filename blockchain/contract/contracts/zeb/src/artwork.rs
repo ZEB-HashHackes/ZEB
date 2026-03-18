@@ -1,14 +1,16 @@
-use soroban_sdk::{contractimpl, Env, Address, BytesN, Map};
+use soroban_sdk::{contractimpl, Env,Symbol, Address, BytesN, Map };
 use crate::types::{Artwork, ZebError};
 use crate::storage::{artworks_map, offers_map,save_artwork, save_offer};
 use crate::events;
-
+use core::clone::Clone;
 
 
 pub fn artwork_exists(e: Env, hash: BytesN<32>) -> bool {
     let artworks = artworks_map(&e);
     artworks.contains_key(hash.clone())
 }
+
+
 
 pub fn register_artwork(
     e: Env,
@@ -105,34 +107,35 @@ pub fn make_offer(e: Env, hash: BytesN<32>, buyer: Address, amount: i128) -> Res
     Ok(())
 }
 
-pub fn accept_offer(e: Env, hash: BytesN<32>, owner: Address, buyer: Address) -> Result<i128, ZebError> {
+pub fn accept_offer(
+    e: Env,
+    hash: BytesN<32>,
+    owner: Address,
+    buyer: Address,
+) -> Result<i128, ZebError> {
     let mut artworks = artworks_map(&e);
     let mut offers_outer = offers_map(&e);
 
-    let mut art = match artworks.get(hash.clone()) {
-        Some(a) => a,
-        None => return Err(ZebError::ArtworkNotFound),
-    };
+    let mut art = artworks.get(hash.clone()).ok_or(ZebError::ArtworkNotFound)?;
 
     if art.current_owner != owner {
         return Err(ZebError::NotOwner);
     }
 
     let mut inner_map = offers_outer.get(hash.clone()).unwrap_or_else(|| Map::new(&e));
-    let amount = match inner_map.get(buyer.clone()) {
-        Some(a) => a,
-        None => return Err(ZebError::InvalidOffer),
-    };
+    let amount = inner_map.get(buyer.clone()).ok_or(ZebError::InvalidOffer)?;
 
+
+    // Update ownership
     art.current_owner = buyer.clone();
     artworks.set(hash.clone(), art);
-    save_artwork(&e,&artworks);
+    save_artwork(&e, &artworks);
+
     inner_map.remove(buyer.clone());
     offers_outer.set(hash.clone(), inner_map);
     save_offer(&e, &offers_outer);
 
-    events::offer_accepted(&e, hash.clone(), buyer, amount);
+    events::offer_accepted(&e, hash, buyer, amount);
 
     Ok(amount)
 }
-

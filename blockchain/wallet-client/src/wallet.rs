@@ -43,4 +43,25 @@ impl WalletClient{
             fee,
         }
     }
+
+    pub async fn sign_with_provider(&self, tx: &Transaction) -> Result<SignedTransaction, String>
+    {
+        // 1. Serialize transaction to XDR or bytes
+        let tx_bytes = encode_address(tx);
+
+        // 2. Call provider API (frontend bridge)
+        // Example for Freighter (JS):
+        // window.freighterApi.signTransaction(tx_bytes)
+        // returns signed_tx_bytes
+
+        // 3. Convert bytes back to SignedTransaction
+        let signed_tx = deserialize_signed_tx(&tx_bytes_signed);
+
+        Ok(signed_tx)
+    }
+
+    pub async fn submit_transaction(&self, signed_tx: &SignedTransaction) -> Result<String, String> {
+        // Submit to Soroban network via SDK
+        soroban_sdk::client::send_transaction(signed_tx)
+    }
 }

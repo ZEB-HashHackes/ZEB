@@ -2,6 +2,10 @@ use crate::types::*;
 
 pub enum OperationType {
     ContractInvoke,
+    CreateAcount,
+    TransferOwership,
+    AcceptOffer,
+    MakeOffer
 }
 
 pub struct Operation {

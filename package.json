@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@stellar/typescript-wallet-sdk": "^2.0.0",
+    "stellar-sdk": "^13.3.0"
+  }
+}

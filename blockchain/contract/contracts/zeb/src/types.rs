@@ -1,4 +1,4 @@
-use soroban_sdk::{Address, contracttype ,BytesN, contracterror};
+use soroban_sdk::{Address, contracttype, contracterror ,BytesN};
 
 // Artwork structure stored on-chain
 #[contracttype]

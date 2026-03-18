@@ -1,3 +1,5 @@
+#![no_std]
+
 use soroban_sdk::{contract, contractimpl, Env, Address, BytesN};
 
 #[cfg(test)]
@@ -61,7 +63,7 @@ impl ZebContract {
         e: Env,
         hash: BytesN<32>,
         owner: Address,
-        buyer: Address
+        buyer: Address,    
     ) -> Result<i128, ZebError> {
         owner.require_auth();
         artwork_logic::accept_offer(e, hash, owner, buyer)
