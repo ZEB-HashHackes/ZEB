@@ -1,17 +1,32 @@
-use soroban_sdk::{Address, contracttype, contracterror ,BytesN};
+use soroban_sdk::{contracttype, contracterror, Address, BytesN, String};
 
-// Artwork structure stored on-chain
 #[contracttype]
 #[derive(Clone)]
 pub struct Artwork {
-    pub hash: BytesN<32>,          // SHA256 hash of the digital content
-    pub creator: Address,          // wallet address of original creator
-    pub current_owner: Address,    // current owner
-    pub timestamp: u64,            // blockchain registration time
+    pub title: String,          // Artwork title
+    pub hash: BytesN<32>,       // SHA256 hash of the digital content
+    pub creator: Address,       // Wallet address of original creator
+    pub current_owner: Address, // Current owner
+    pub timestamp: u128,        // Blockchain registration time
 }
 
-// Errors for Zeb contract
+#[contracttype]
+#[derive(Clone)]
+pub struct Auction {
+    pub artwork_hash: BytesN<32>,
+    pub seller: Address,
+    pub start_time: u128,
+    pub end_time: u128,
+    pub highest_bid: u128,
+    pub highest_bidder: Option<Address>,
+}
 
+#[contracttype]
+#[derive(Clone)]
+pub struct Offer {
+    pub amount: u128,     // Offer amount in stroops / smallest unit
+    pub buyer: Address,   // Buyer wallet address
+}
 
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -21,12 +36,5 @@ pub enum ZebError {
     ArtworkNotFound = 2,
     NotOwner = 3,
     InvalidOffer = 4,
-}
-
-// Offer struct (optional, can extend with timestamp if needed)
-#[contracttype]
-#[derive(Clone)]
-pub struct Offer {
-    pub amount: i128,              // offer amount in stroops / asset smallest unit
-    pub buyer: Address,            // buyer wallet address
+    InvalidAuction = 5,
 }
