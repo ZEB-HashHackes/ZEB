@@ -1,6 +1,6 @@
-use soroban_sdk::{contractimpl, Env,Symbol, Address, String ,BytesN, Map };
-use crate::types::{Artwork, ZebError, Auction};
-use crate::storage::{artworks_map, offers_map,auctions_map,save_auction,save_artwork, save_offer};
+use soroban_sdk::{Env,Symbol, Address, String ,BytesN, Map };
+use crate::types::{Artwork, ZebError, Auction, Listing};
+use crate::storage::{artworks_map, auctions_map,save_auction,save_artwork, listings_map, save_listing};
 use crate::events;
 use core::clone::Clone;
 
@@ -129,81 +129,6 @@ pub fn transfer_ownership(
     Ok(())
 }
 
-// pub fn make_offer(
-//     e: Env,
-//     hash: BytesN<32>,
-//     buyer: Address,
-//     amount: u128,
-// ) -> Result<(), ZebError> {
-//
-//     buyer.require_auth();
-//
-//     if amount <= 0 {
-//         return Err(ZebError::InvalidOffer);
-//     }
-//
-//     let artworks = artworks_map(&e);
-//     if !artworks.contains_key(hash.clone()) {
-//         return Err(ZebError::ArtworkNotFound);
-//     }
-//
-//     let mut offers_outer = offers_map(&e);
-//     let mut inner = offers_outer
-//         .get(hash.clone())
-//         .unwrap_or(Map::new(&e));
-//
-//     inner.set(buyer.clone(), amount);
-//     offers_outer.set(hash.clone(), inner);
-//
-//     save_offer(&e, &offers_outer);
-//
-//     events::offer_made(&e, hash, buyer, amount);
-//
-//     Ok(())
-// }
-
-
-// pub fn accept_offer(
-//     e: Env,
-//     hash: BytesN<32>,
-//     owner: Address,
-//     buyer: Address,
-// ) -> Result<u128, ZebError> {
-//
-//
-//     let mut artworks = artworks_map(&e);
-//     let mut offers_outer = offers_map(&e);
-//
-//     let mut art = artworks
-//         .get(hash.clone())
-//         .ok_or(ZebError::ArtworkNotFound)?;
-//
-//     if art.current_owner != owner {
-//         return Err(ZebError::NotOwner);
-//     }
-//
-//     let mut inner = offers_outer
-//         .get(hash.clone())
-//         .unwrap_or(Map::new(&e));
-//
-//     let amount = inner
-//         .get(buyer.clone())
-//         .ok_or(ZebError::InvalidOffer)?;
-//
-//     art.current_owner = buyer.clone();
-//     artworks.set(hash.clone(), art);
-//     save_artwork(&e, &artworks);
-//
-//     inner.remove(buyer.clone());
-//     offers_outer.set(hash.clone(), inner);
-//     save_offer(&e, &offers_outer);
-//
-//     events::offer_accepted(&e, hash, buyer, amount);
-//
-//     Ok(amount)
-// }
-
-
 pub fn create_auction(
     e: Env,
     hash: BytesN<32>,
@@ -227,6 +152,12 @@ pub fn create_auction(
 
     if auctions.contains_key(hash.clone()) {
         return Err(ZebError::InvalidAuction);
+    }
+
+    // Ensure not listed for fixed price
+    let listings = listings_map(&e);
+    if listings.contains_key(hash.clone()) {
+        return Err(ZebError::ArtworkAlreadyListed);
     }
 
     let auction = Auction {
@@ -327,4 +258,98 @@ pub fn close_auction(
     save_auction(&e, &auctions);
 
     Ok(())
+}
+
+pub fn list_for_sale(
+    e: Env,
+    hash: BytesN<32>,
+    seller: Address,
+    price: u128,
+    timestamp: u128,
+) -> Result<(), ZebError> {
+    seller.require_auth();
+
+    let artworks = artworks_map(&e);
+    let art = artworks.get(hash.clone()).ok_or(ZebError::ArtworkNotFound)?;
+
+    if art.current_owner != seller {
+        return Err(ZebError::NotOwner);
+    }
+
+    let mut listings = listings_map(&e);
+    if listings.contains_key(hash.clone()) {
+        return Err(ZebError::ArtworkAlreadyListed);
+    }
+
+    let auctions = auctions_map(&e);
+    if auctions.contains_key(hash.clone()) {
+        return Err(ZebError::InvalidAuction);
+    }
+
+    let listing = Listing {
+        artwork_hash: hash.clone(),
+        seller: seller.clone(),
+        price,
+        timestamp,
+    };
+
+    listings.set(hash.clone(), listing);
+    save_listing(&e, &listings);
+
+    events::artwork_listed(&e, hash, seller, price);
+
+    Ok(())
+}
+
+pub fn cancel_listing(
+    e: Env,
+    hash: BytesN<32>,
+    caller: Address,
+) -> Result<(), ZebError> {
+    caller.require_auth();
+
+    let mut listings = listings_map(&e);
+    let listing = listings.get(hash.clone()).ok_or(ZebError::ListingNotFound)?;
+
+    if listing.seller != caller {
+        return Err(ZebError::NotOwner);
+    }
+
+    listings.remove(hash.clone());
+    save_listing(&e, &listings);
+
+    events::listing_cancelled(&e, hash, caller);
+
+    Ok(())
+}
+
+pub fn buy_now(
+    e: Env,
+    hash: BytesN<32>,
+    buyer: Address,
+) -> Result<(), ZebError> {
+    buyer.require_auth();
+
+    let mut listings = listings_map(&e);
+    let listing = listings.get(hash.clone()).ok_or(ZebError::ListingNotFound)?;
+
+    let mut artworks = artworks_map(&e);
+    let mut art = artworks.get(hash.clone()).ok_or(ZebError::ArtworkNotFound)?;
+
+    art.current_owner = buyer.clone();
+    artworks.set(hash.clone(), art);
+    save_artwork(&e, &artworks);
+
+    listings.remove(hash.clone());
+    save_listing(&e, &listings);
+
+    events::artwork_bought(&e, hash, buyer, listing.price);
+
+    Ok(())
+}
+
+pub fn get_listings(
+    e: Env,
+) -> Map<BytesN<32>, Listing> {
+    listings_map(&e)
 }

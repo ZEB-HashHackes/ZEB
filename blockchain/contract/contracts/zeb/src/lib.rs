@@ -136,4 +136,36 @@ impl ZebContract {
     ) -> Result<(), ZebError> {
         artwork_logic::close_auction(e, hash, caller, current_time)
     }
+
+    pub fn list_for_sale(
+        e: Env,
+        hash: BytesN<32>,
+        seller: Address,
+        price: u128,
+        timestamp: u128,
+    ) -> Result<(), ZebError> {
+        artwork_logic::list_for_sale(e, hash, seller, price, timestamp)
+    }
+
+    pub fn cancel_listing(
+        e: Env,
+        hash: BytesN<32>,
+        caller: Address,
+    ) -> Result<(), ZebError> {
+        artwork_logic::cancel_listing(e, hash, caller)
+    }
+
+    pub fn buy_now(
+        e: Env,
+        hash: BytesN<32>,
+        buyer: Address,
+    ) -> Result<(), ZebError> {
+        artwork_logic::buy_now(e, hash, buyer)
+    }
+
+    pub fn get_listings(
+        e: Env,
+    ) -> Map<BytesN<32>, crate::types::Listing> {
+        artwork_logic::get_listings(e)
+    }
 }

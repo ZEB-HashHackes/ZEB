@@ -28,6 +28,15 @@ pub struct Offer {
     pub buyer: Address,   // Buyer wallet address
 }
 
+#[contracttype]
+#[derive(Clone)]
+pub struct Listing {
+    pub artwork_hash: BytesN<32>,
+    pub seller: Address,
+    pub price: u128,
+    pub timestamp: u128,
+}
+
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[repr(u32)]
@@ -37,4 +46,6 @@ pub enum ZebError {
     NotOwner = 3,
     InvalidOffer = 4,
     InvalidAuction = 5,
+    ArtworkAlreadyListed = 6,
+    ListingNotFound = 7,
 }

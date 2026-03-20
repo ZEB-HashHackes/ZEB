@@ -1,6 +1,7 @@
 import express from "express";
 import { Types } from "mongoose";
 import Auction from "../models/auction.model.ts";
+import Art from "../models/art.model.ts";
 
 const router = express.Router();
 
@@ -8,8 +9,13 @@ router.post("/create", async (req, res) => {
   try {
     const { art_hash, seller, end_time } = req.body;
 
+    const artwork = await Art.findOne({ contentHash: art_hash });
+    if (!artwork) {
+      return res.status(404).json({ status: "error", message: "Art not found" });
+    }
+
     const existing = await Auction.findOne({ art_hash });
-    if (existing.end_time > Date.now()) {
+    if (existing && existing.end_time > Date.now()) {
       return res.status(401).json({ status: "error", message: "auction exists" });
     }
     
@@ -121,9 +127,16 @@ router.delete("/close/:art_hash", async (req, res) => {
       { new: true }
     );
 
+    if (closed && closed.highest_bidder) {
+      await Art.findOneAndUpdate(
+        { contentHash: art_hash },
+        { $set: { ownedBy: closed.highest_bidder } }
+      );
+    }
+
     return res.status(200).json({
       status: "ok",
-      message: "auction closed",
+      message: closed && closed.highest_bidder ? `auction closed and owner updated to ${closed.highest_bidder}` : "auction closed (no bids)",
       data: closed?._id
     });
 

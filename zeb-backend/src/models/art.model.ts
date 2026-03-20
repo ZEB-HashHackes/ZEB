@@ -53,7 +53,7 @@ const artSchema: Schema<IArt> = new Schema<IArt>({
   creatorBy: {type: String, required: true},
   ownedBy: {type: String, required: true},
   category: {type:String, 
-            enum: ["image", "drawing", "2d", "3d", "music"],
+            enum: ["image", "drawing", "2d", "3d", "music", "text"],
             required: true},
   minPrice: {type: Number, required: true},
 }, {timestamps: true});

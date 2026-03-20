@@ -87,3 +87,32 @@ pub fn auction_bid(
      let topics = (Symbol::short("auc_bid"), hash);
     e.events().publish(topics, (bidder, amount));
 }
+
+pub fn artwork_listed(
+    e: &Env,
+    hash: BytesN<32>,
+    seller: Address,
+    price: u128
+) {
+    let topics = (Symbol::short("art_list"), hash);
+    e.events().publish(topics, (seller, price));
+}
+
+pub fn listing_cancelled(
+    e: &Env,
+    hash: BytesN<32>,
+    seller: Address
+) {
+    let topics = (Symbol::short("list_can"), hash);
+    e.events().publish(topics, seller);
+}
+
+pub fn artwork_bought(
+    e: &Env,
+    hash: BytesN<32>,
+    buyer: Address,
+    price: u128
+) {
+    let topics = (Symbol::short("art_buy"), hash);
+    e.events().publish(topics, (buyer, price));
+}

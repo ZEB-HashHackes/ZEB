@@ -1,5 +1,5 @@
 use soroban_sdk::{Env, Map, Symbol, BytesN, Address};
-use crate::types::{Artwork, Auction};
+use crate::types::{Artwork, Auction, Listing};
 
 pub struct StorageKeys;
 
@@ -7,6 +7,7 @@ impl StorageKeys {
     pub const ARTWORKS: Symbol = Symbol::short("artworks");
     pub const OFFERS: Symbol = Symbol::short("offers");
     pub const AUCTIONS: Symbol = Symbol::short("auctions");
+    pub const LISTINGS: Symbol = Symbol::short("listings");
 }
 
 pub fn artworks_map(e: &Env) -> Map<BytesN<32>, Artwork> {
@@ -40,4 +41,15 @@ pub fn auctions_map(e: &Env) -> Map<BytesN<32>, Auction> {
 
 pub fn save_auction(e: &Env, map: &Map<BytesN<32>, Auction>) {
     e.storage().persistent().set(&StorageKeys::AUCTIONS, map);
+}
+
+pub fn listings_map(e: &Env) -> Map<BytesN<32>, Listing> {
+    e.storage()
+        .persistent()
+        .get(&StorageKeys::LISTINGS)
+        .unwrap_or(Map::new(e))
+}
+
+pub fn save_listing(e: &Env, map: &Map<BytesN<32>, Listing>) {
+    e.storage().persistent().set(&StorageKeys::LISTINGS, map);
 }
