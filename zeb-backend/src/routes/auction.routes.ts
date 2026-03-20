@@ -15,11 +15,11 @@ router.post("/create", async (req, res) => {
     }
 
     const existing = await Auction.findOne({ art_hash });
-    if (existing && existing.end_time > Date.now()) {
+    if (existing && existing.end_time.getTime() > Date.now()) {
       return res.status(401).json({ status: "error", message: "auction exists" });
     }
     
-    if (end_time < Date.now()) 
+    if (new Date(end_time).getTime() < Date.now()) 
       return res.status(401).json({status: "error", message:"Invalid Auction"});
 
     const auction = new Auction({

@@ -21,7 +21,7 @@ router.post("/register", async (req, res) => {
 });
 
 router.post("/login",auth ,async (req, res) => {
-  res.json({ message: "Login successful", userId: req.user._id });
+  res.json({ message: "Login successful", userId: (req as any).user._id });
 });
 
 

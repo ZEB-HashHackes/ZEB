@@ -42,7 +42,7 @@ router.post("/", upload.single("file"), async (req, res) => {
       title,
       description,
       filePath: `uploads/${hashHex}`,
-      hash: hashHex,
+      contentHash: hashHex,
       creatorBy,
       ownedBy,
       category,
@@ -71,12 +71,12 @@ router.post("/", upload.single("file"), async (req, res) => {
 router.post("/register", async (req, res) => {
   try{
     const { title, description,
-            filePath, hash,
+            filePath, contentHash,
             creatorBy, ownedBy,
             category, minPrice } = req.body;
 
     const art = new Art({ title, description,
-            filePath, hash,
+            filePath, contentHash,
             creatorBy, ownedBy,
             category, minPrice });
 
@@ -111,7 +111,7 @@ router.put("/price/:id", async (req, res) => {
                                                 {minPrice: minPrice},
                                                 {returnDocument: 'after', runValidators: true});
 
-    if (!updated) res.status(404).json({status:"error", message:"art not found"});
+    if (!updated) return res.status(404).json({status:"error", message:"art not found"});
     res.status(200).json({status:"ok", message:"minprice upadated", data: updated.minPrice});
 
   }catch (err){
@@ -130,7 +130,7 @@ router.put("/owner/:id", async (req, res) => {
                                                 {ownedBy: ownedBy},
                                                 {returnDocument: 'after', runValidators: true});
 
-    if (!updated) res.status(404).json({status:"error", message:"art not found"});
+    if (!updated) return res.status(404).json({status:"error", message:"art not found"});
     res.status(200).json({status:"ok", message:"owner upadated", data: updated.ownedBy});
   }catch (err){
     console.log("Error upadating owner", err);
