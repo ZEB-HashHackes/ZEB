@@ -1,12 +1,14 @@
 use soroban_sdk::{Env, Symbol, Address, BytesN, Vec};
+use soroban_sdk::String;
 
 pub fn artwork_registered(
     e: &Env,
+    title: String, 
     hash: BytesN<32>,
     creator: Address,
-    timestamp: u64
+    timestamp: u128
 ) {
-    let topics = (Symbol::short("art_reg"), hash);
+    let topics = (Symbol::short("art_reg"), title, hash);
 
     e.events().publish(topics, (creator, timestamp));
 }
@@ -26,7 +28,7 @@ pub fn offer_made(
     e: &Env,
     hash: BytesN<32>,
     buyer: Address,
-    amount: i128
+    amount: u128
 ) {
     let topics = (Symbol::short("offer"), hash);
 
@@ -37,9 +39,51 @@ pub fn offer_accepted(
     e: &Env,
     hash: BytesN<32>,
     buyer: Address,
-    amount: i128
+    amount: u128
 ) {
     let topics = (Symbol::short("offer_acc"), hash);
 
     e.events().publish(topics, (buyer, amount));
+}
+
+
+pub fn auction_ended(
+    e: &Env,
+    hash: BytesN<32>,
+    winner: Address,
+    amount: u128,
+){
+    let topics = (Symbol::short("auc_end"), hash);
+    e.events().publish(topics, (winner, amount));
+}
+
+pub fn auction_created(
+    e: &Env,
+    hash: BytesN<32>,
+    owener: Address,
+    statedAt: u128
+){
+    let topics = (Symbol::short("auc_crt"), hash);
+    e.events().publish(topics, (owener, statedAt));
+}
+
+pub fn auction_opened(
+    e: &Env,
+    hash: BytesN<32>,
+    owener: Address,
+    startedAt: u128,
+    endsAt: u128
+){
+    let topics = (Symbol::short("auc_open"), hash);
+    e.events().publish(topics, (owener, startedAt, endsAt));
+}
+
+pub fn auction_bid(
+    e: &Env,
+    hash: BytesN<32>,
+    bidder: Address,
+    amount: u128
+){
+     let topics = (Symbol::short("auc_bid"), hash);
+    e.events().publish(topics, (bidder, amount));
 }
