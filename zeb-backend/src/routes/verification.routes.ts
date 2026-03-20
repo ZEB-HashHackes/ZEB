@@ -1,6 +1,6 @@
 import express from "express";
 import multer from "multer";
-import { VerificationService } from "../services/verification.service.ts";
+import { VerificationService } from "../services/verification.service.js";
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });

@@ -1,7 +1,7 @@
 import ffmpeg from "fluent-ffmpeg";
 import path from "path";
 import fs from "fs";
-import { generatePHash } from "./image.ts";
+import { generatePHash } from "./image.js";
 
 /**
  * Generates a video signature by extracting frames and hashing them.

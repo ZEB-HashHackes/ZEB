@@ -1,7 +1,7 @@
 import express from "express";
 import { Types } from "mongoose";
-import Auction from "../models/auction.model.ts";
-import Art from "../models/art.model.ts";
+import Auction from "../models/auction.model.js";
+import Art from "../models/art.model.js";
 
 const router = express.Router();
 

@@ -1,11 +1,11 @@
 import express from "express";
-import {connectDB} from "./config/db.ts";
+import {connectDB} from "./config/db.js";
 import dotenv from "dotenv";
-import users from "./routes/user.routes.ts"
-import arts from "./routes/art.routes.ts"
-import verification from "./routes/verification.routes.ts"
-import auction from "./routes/auction.routes.ts"
-import activity from "./routes/activity.routes.ts"
+import users from "./routes/user.routes.js"
+import arts from "./routes/art.routes.js"
+import verification from "./routes/verification.routes.js"
+import auction from "./routes/auction.routes.js"
+import activity from "./routes/activity.routes.js"
 
 const app = express();
 app.use(express.json());

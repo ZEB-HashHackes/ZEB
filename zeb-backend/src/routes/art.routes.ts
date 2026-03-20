@@ -1,8 +1,8 @@
 import express from "express";
-import Art from "../models/art.model.ts";
+import Art from "../models/art.model.js";
 import {Types} from "mongoose";
 import multer from "multer";
-import { ArtService } from "../services/art.service.ts";
+import { ArtService } from "../services/art.service.js";
 
 const router = express.Router();
 

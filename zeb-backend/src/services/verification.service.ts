@@ -1,9 +1,9 @@
-import { ArtStatus, FileType, SimilarityMethod, default as Art } from "../models/art.model.ts";
-import { generateContentHash } from "../utils/verification/hashing.ts";
-import { generatePHash, calculateHammingDistance } from "../utils/verification/image.ts";
-import { generateVideoSignature } from "../utils/verification/video.ts";
-import { generateAudioSignature } from "../utils/verification/audio.ts";
-import { normalizeText, calculateTextSimilarity } from "../utils/verification/text.ts";
+import { ArtStatus, FileType, SimilarityMethod, default as Art } from "../models/art.model.js";
+import { generateContentHash } from "../utils/verification/hashing.js";
+import { generatePHash, calculateHammingDistance } from "../utils/verification/image.js";
+import { generateVideoSignature } from "../utils/verification/video.js";
+import { generateAudioSignature } from "../utils/verification/audio.js";
+import { normalizeText, calculateTextSimilarity } from "../utils/verification/text.js";
 import mime from "mime-types";
 import path from "path";
 import fs from "fs";
@@ -26,7 +26,7 @@ export class VerificationService {
     file: Express.Multer.File,
     metadata: { title: string; description?: string; creatorBy: string; ownedBy: string; category: string; minPrice: number }
   ): Promise<VerificationResult> {
-    const mimeType = file.mimetype || mime.lookup(file.originalname) || "application/octet-stream";
+    const mimeType = file.mimetype || (mime.lookup(file.originalname) as string) || "application/octet-stream";
     const fileType = this.getFileType(mimeType);
     const contentHash = generateContentHash(file.buffer);
 
@@ -99,11 +99,7 @@ export class VerificationService {
         similarityMethod = SimilarityMethod.TEXT_NORMALIZED_HASH;
 
         const allTexts = await Art.find({ fileType: FileType.TEXT });
-        // NOTE: For better performance, we'd use a search engine or vector DB, 
-        // but for MVP we load and compare with string-similarity.
         for (const t of allTexts) {
-          // Since we might not have the original buffer, we might need to store the normalized text or re-read file
-          // Improv for MVP: If exact normalized hash matches, it's flagged.
           if (t.similarityHash === similarityHash) {
             isFlagged = true;
             flagMessage = "Duplicate normalized text content detected.";
@@ -116,9 +112,10 @@ export class VerificationService {
     // 3. Save Artwork Metadata
     const status = isFlagged ? ArtStatus.FLAGGED : ArtStatus.ACTIVE;
     
-    // In a real app, we'd save the file to a storage bucket/disk here. 
-    // Assuming uploads/ directory as per existing codebase.
     const uploadPath = `uploads/${Date.now()}_${file.originalname}`;
+    if (!fs.existsSync(path.resolve("uploads"))) {
+      fs.mkdirSync(path.resolve("uploads"), { recursive: true });
+    }
     fs.writeFileSync(path.resolve(uploadPath), file.buffer);
 
     const art = await Art.create({

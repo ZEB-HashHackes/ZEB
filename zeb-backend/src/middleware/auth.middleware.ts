@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
-import User from "../models/user.model.ts";
+import User from "../models/user.model.js";
 
 const auth = async (req: Request, res: Response, next: NextFunction) => {
   try {
