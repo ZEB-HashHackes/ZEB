@@ -12,14 +12,16 @@ const RPC_URL = "https://soroban-testnet.stellar.org";
 const NETWORK_PASSPHRASE = Networks.TESTNET;
 
 const CONTRACT_ID =
-  "CBKPCUAV43WVJVLGIXTI2VEANBRLMFJLWAORKPPWKF6KD6WRSJOXU4MQ";
+  "CAG3L7MRMVAIITRM7JVJ2G3KE6C6WYS3MVAIGXV3DXKMR7UA667J7LBQ";
 
 export default function App() {
   const [publicKey, setPublicKey] = useState("");
   const [hashInput, setHashInput] = useState("");
+  const [titleInput, setTitleInput] = useState("");
   const [newOwner, setNewOwner] = useState("");
-  const [buyer, setBuyer] = useState("");
-  const [offerAmount, setOfferAmount] = useState("");
+  const [bidAmount, setBidAmount] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [result, setResult] = useState("");
 
   const server = new rpc.Server(RPC_URL);
@@ -71,40 +73,51 @@ export default function App() {
     return nativeToScVal(bytes, { type: "bytes" });
   }
 
-  // Check if artwork exists
-  async function checkArtworkExists() {
-    const account = await server.getAccount(publicKey);
-
-    const tx = new TransactionBuilder(account, {
-      fee: "200000",
-      networkPassphrase: NETWORK_PASSPHRASE,
-    })
-      .addOperation(contract.call("artwork_exists", hexToBytesN(hashInput)))
-      .setTimeout(30)
-      .build();
-
-    const simulated = await server.simulateTransaction(tx);
-
-    if ("error" in simulated) {
-      throw new Error(simulated.error);
-    }
-
-    if (!simulated.result || !simulated.result.retval) {
-      throw new Error("No return value from simulation");
-    }
-
-    const native = scValToNative(simulated.result.retval);
-
-    setResult("Exists: " + native);
+  // Helper for simulation success check
+  function isSimulateSuccess(sim: any): sim is { result: { retval: any } } {
+    return sim && "result" in sim && sim.result !== undefined;
   }
 
-  // 
+  // Check if artwork exists
+  async function checkArtworkExists() {
+    try {
+      const account = await server.getAccount(publicKey);
+
+      const tx = new TransactionBuilder(account, {
+        fee: "200000",
+        networkPassphrase: NETWORK_PASSPHRASE,
+      })
+        .addOperation(contract.call("artwork_exists", hexToBytesN(hashInput)))
+        .setTimeout(30)
+        .build();
+
+      const simulated = await server.simulateTransaction(tx);
+
+      if ("error" in simulated) {
+        throw new Error(simulated.error);
+      }
+
+      if (!simulated.result || !simulated.result.retval) {
+        throw new Error("No return value from simulation");
+      }
+
+      const native = scValToNative(simulated.result.retval);
+      setResult("Exists: " + native);
+    } catch (err: any) {
+      console.error(err);
+      setResult("Error: " + (err.message || err));
+    }
+  }
+
   // Register artwork
   async function registerArtwork() {
     if (!publicKey) return setResult("Connect wallet first");
+    if (!titleInput) return setResult("Enter artwork title");
+    if (!hashInput) return setResult("Enter artwork hash");
 
     try {
       const account = await server.getAccount(publicKey);
+      const timestamp = Math.floor(Date.now() / 1000);
 
       const tx = new TransactionBuilder(account, {
         fee: "100000",
@@ -113,9 +126,10 @@ export default function App() {
         .addOperation(
           contract.call(
             "register_artwork",
+            nativeToScVal(titleInput, { type: "string" }),
             hexToBytesN(hashInput),
             nativeToScVal(publicKey, { type: "address" }),
-            nativeToScVal(Math.floor(Date.now() / 1000), { type: "u64" })
+            nativeToScVal(timestamp, { type: "u128" })
           )
         )
         .setTimeout(1000)
@@ -134,211 +148,402 @@ export default function App() {
       if (!signedXdr) throw new Error("Signing failed or returned undefined");
 
       const signedTx = TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE);
-
       const sendResult = await server.sendTransaction(signedTx);
-      setResult("Register TX Hash: " + sendResult.hash);
-      console.log("Transaction Error:", JSON.stringify(sendResult.errorResult, null, 2));
 
-      const txStatus = await server.getTransaction(sendResult.hash);
-      console.log("TX Status:", txStatus);
+      setResult("Register TX Hash: " + sendResult.hash);
+      console.log("Transaction sent:", sendResult.hash);
     } catch (err: any) {
       console.error(err);
       setResult("Error: " + (err.message || err));
     }
   }
 
+  // Transfer ownership
   async function transferOwnership() {
     if (!publicKey) return setResult("Connect wallet first");
     if (!newOwner) return setResult("Enter new owner address");
+    if (!hashInput) return setResult("Enter artwork hash");
 
-    const account = await server.getAccount(publicKey);
+    try {
+      const account = await server.getAccount(publicKey);
 
-    const tx = new TransactionBuilder(account, {
-      fee: "100000",
-      networkPassphrase: NETWORK_PASSPHRASE,
-    })
-      .addOperation(
-        contract.call(
-          "transfer_ownership",
-          hexToBytesN(hashInput),
-          nativeToScVal(publicKey, { type: "address" }),
-          nativeToScVal(newOwner, { type: "address" })
+      const tx = new TransactionBuilder(account, {
+        fee: "100000",
+        networkPassphrase: NETWORK_PASSPHRASE,
+      })
+        .addOperation(
+          contract.call(
+            "transfer_ownership",
+            hexToBytesN(hashInput),
+            nativeToScVal(publicKey, { type: "address" }),
+            nativeToScVal(newOwner, { type: "address" })
+          )
         )
-      )
-      .setTimeout(1000)
-      .build();
+        .setTimeout(1000)
+        .build();
 
-    const prepared = await server.prepareTransaction(tx);
+      const prepared = await server.prepareTransaction(tx);
 
-    const { signTransaction } = await import("@stellar/freighter-api");
-    const { signedTxXdr } = await signTransaction(prepared.toXDR(), {
-      networkPassphrase: NETWORK_PASSPHRASE,
-    });
+      const { signTransaction } = await import("@stellar/freighter-api");
+      const signedTxEnvelope = await signTransaction(prepared.toXDR(), {
+        networkPassphrase: NETWORK_PASSPHRASE,
+      });
 
-    const signedTx = TransactionBuilder.fromXDR(signedTxXdr, NETWORK_PASSPHRASE);
-    const send = await server.sendTransaction(signedTx);
+      const signedXdr =
+        (signedTxEnvelope as any).signedXdr || (signedTxEnvelope as any).signedTxXdr;
 
-    setResult("Transfer TX Hash: " + send.hash);
+      if (!signedXdr) throw new Error("Signing failed");
+
+      const signedTx = TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE);
+      const sendResult = await server.sendTransaction(signedTx);
+
+      setResult("Transfer TX Hash: " + sendResult.hash);
+    } catch (err: any) {
+      console.error(err);
+      setResult("Error: " + (err.message || err));
+    }
   }
 
-  function isSimulateSuccess(
-    sim: any
-  ): sim is { result: { retval: any } } {
-    return sim && "result" in sim && sim.result !== undefined;
+  // Get creator
+  async function getCreator() {
+    try {
+      if (!hashInput) return setResult("Enter artwork hash");
+
+      const account = await server.getAccount(publicKey);
+
+      const tx = new TransactionBuilder(account, {
+        fee: "200000",
+        networkPassphrase: NETWORK_PASSPHRASE,
+      })
+        .addOperation(contract.call("get_creator", hexToBytesN(hashInput)))
+        .setTimeout(1000)
+        .build();
+
+      const simulated = await server.simulateTransaction(tx);
+
+      if ("error" in simulated) {
+        throw new Error(simulated.error);
+      }
+      if (!isSimulateSuccess(simulated)) {
+        throw new Error("Simulation failed or no result returned");
+      }
+
+      const creator = scValToNative(simulated.result.retval);
+      setResult("Creator: " + creator);
+    } catch (err: any) {
+      console.error(err);
+      setResult("Error: " + (err.message || err));
+    }
   }
 
-async function getCreator() {
-  try {
-    const account = await server.getAccount(publicKey);
+  // Get owner
+  async function getOwner() {
+    try {
+      if (!hashInput) return setResult("Enter artwork hash");
 
-    const tx = new TransactionBuilder(account, {
-      fee: "200000",
-      networkPassphrase: NETWORK_PASSPHRASE,
-    })
-      .addOperation(contract.call("get_creator", hexToBytesN(hashInput)))
-      .setTimeout(1000)
-      .build();
+      const account = await server.getAccount(publicKey);
 
-    const simulated = await server.simulateTransaction(tx);
+      const tx = new TransactionBuilder(account, {
+        fee: "200000",
+        networkPassphrase: NETWORK_PASSPHRASE,
+      })
+        .addOperation(contract.call("get_owner", hexToBytesN(hashInput)))
+        .setTimeout(30)
+        .build();
 
-    
-    if ("error" in simulated) {
-      throw new Error(simulated.error);
+      const simulated = await server.simulateTransaction(tx);
+
+      if ("error" in simulated) {
+        throw new Error(simulated.error);
+      }
+      if (!isSimulateSuccess(simulated)) {
+        throw new Error("Simulation failed or no result returned");
+      }
+
+      const owner = scValToNative(simulated.result.retval);
+      setResult("Owner: " + owner);
+    } catch (err: any) {
+      console.error(err);
+      setResult("Error: " + (err.message || err));
     }
-    if (!isSimulateSuccess(simulated)) {
-      throw new Error("Simulation failed or no result returned");
-    }
-
-    const creator = scValToNative(simulated.result.retval);
-    setResult("Creator: " + creator);
-  } catch (err: any) {
-    console.error(err);
-    setResult("Error: " + (err.message || err));
   }
-}
 
+  // Get highest bid
+  async function getHighestBid() {
+    try {
+      if (!hashInput) return setResult("Enter artwork hash");
 
-async function getOwner() {
-  try {
-    const account = await server.getAccount(publicKey);
+      const account = await server.getAccount(publicKey);
 
-    const tx = new TransactionBuilder(account, {
-      fee: "200000",
-      networkPassphrase: NETWORK_PASSPHRASE,
-    })
-      .addOperation(contract.call("get_owner", hexToBytesN(hashInput)))
-      .setTimeout(30)
-      .build();
+      const tx = new TransactionBuilder(account, {
+        fee: "200000",
+        networkPassphrase: NETWORK_PASSPHRASE,
+      })
+        .addOperation(contract.call("get_highest_bid", hexToBytesN(hashInput)))
+        .setTimeout(30)
+        .build();
 
-    const simulated = await server.simulateTransaction(tx);
+      const simulated = await server.simulateTransaction(tx);
 
-    if ("error" in simulated) {
-      throw new Error(simulated.error);
+      if ("error" in simulated) {
+        throw new Error(simulated.error);
+      }
+      if (!isSimulateSuccess(simulated)) {
+        throw new Error("Simulation failed or no result returned");
+      }
+
+      const bid = scValToNative(simulated.result.retval);
+      setResult("Highest Bid: " + bid);
+    } catch (err: any) {
+      console.error(err);
+      setResult("Error: " + (err.message || err));
     }
-    if (!isSimulateSuccess(simulated)) {
-      throw new Error("Simulation failed or no result returned");
-    }
-
-    const owner = scValToNative(simulated.result.retval);
-    setResult("Owner: " + owner);
-  } catch (err: any) {
-    console.error(err);
-    setResult("Error: " + (err.message || err));
   }
-}
 
+  // Get highest bidder
+  async function getHighestBidder() {
+    try {
+      if (!hashInput) return setResult("Enter artwork hash");
 
-  async function makeOffer() {
-    if (!buyer || !offerAmount) return setResult("Enter buyer and amount");
-    const account = await server.getAccount(publicKey);
+      const account = await server.getAccount(publicKey);
 
-    const tx = new TransactionBuilder(account, {
-      fee: "200000",
-      networkPassphrase: NETWORK_PASSPHRASE,
-    })
-      .addOperation(
-        contract.call(
-          "make_offer",
-          hexToBytesN(hashInput),
-          nativeToScVal(buyer, { type: "address" }),
-          nativeToScVal(parseInt(offerAmount), { type: "i128" })
+      const tx = new TransactionBuilder(account, {
+        fee: "200000",
+        networkPassphrase: NETWORK_PASSPHRASE,
+      })
+        .addOperation(contract.call("get_highest_bidder", hexToBytesN(hashInput)))
+        .setTimeout(30)
+        .build();
+
+      const simulated = await server.simulateTransaction(tx);
+
+      if ("error" in simulated) {
+        throw new Error(simulated.error);
+      }
+      if (!isSimulateSuccess(simulated)) {
+        throw new Error("Simulation failed or no result returned");
+      }
+
+      const bidder = scValToNative(simulated.result.retval);
+      setResult("Highest Bidder: " + (bidder || "None"));
+    } catch (err: any) {
+      console.error(err);
+      setResult("Error: " + (err.message || err));
+    }
+  }
+
+  // Check if auction exists
+  async function checkAuctionExists() {
+    try {
+      if (!hashInput) return setResult("Enter artwork hash");
+
+      const account = await server.getAccount(publicKey);
+
+      const tx = new TransactionBuilder(account, {
+        fee: "200000",
+        networkPassphrase: NETWORK_PASSPHRASE,
+      })
+        .addOperation(contract.call("auction_exists", hexToBytesN(hashInput)))
+        .setTimeout(30)
+        .build();
+
+      const simulated = await server.simulateTransaction(tx);
+
+      if ("error" in simulated) {
+        throw new Error(simulated.error);
+      }
+      if (!isSimulateSuccess(simulated)) {
+        throw new Error("Simulation failed or no result returned");
+      }
+
+      const exists = scValToNative(simulated.result.retval);
+      setResult("Auction Exists: " + exists);
+    } catch (err: any) {
+      console.error(err);
+      setResult("Error: " + (err.message || err));
+    }
+  }
+
+  // Create auction
+  async function createAuction() {
+    if (!publicKey) return setResult("Connect wallet first");
+    if (!hashInput) return setResult("Enter artwork hash");
+    if (!startTime) return setResult("Enter start time");
+    if (!endTime) return setResult("Enter end time");
+
+    try {
+      const account = await server.getAccount(publicKey);
+
+      const tx = new TransactionBuilder(account, {
+        fee: "100000",
+        networkPassphrase: NETWORK_PASSPHRASE,
+      })
+        .addOperation(
+          contract.call(
+            "create_auction",
+            hexToBytesN(hashInput),
+            nativeToScVal(publicKey, { type: "address" }),
+            nativeToScVal(parseInt(startTime), { type: "u128" }),
+            nativeToScVal(parseInt(endTime), { type: "u128" })
+          )
         )
-      )
-      .setTimeout(30)
-      .build();
+        .setTimeout(1000)
+        .build();
 
-    const prepared = await server.prepareTransaction(tx);
-    const { signTransaction } = await import("@stellar/freighter-api");
-    const signedTxEnvelope = await signTransaction(prepared.toXDR(), {
-      networkPassphrase: NETWORK_PASSPHRASE,
-    });
+      const prepared = await server.prepareTransaction(tx);
 
-    const signedXdr =
-      (signedTxEnvelope as any).signedXdr || (signedTxEnvelope as any).signedTxXdr;
+      const { signTransaction } = await import("@stellar/freighter-api");
+      const signedTxEnvelope = await signTransaction(prepared.toXDR(), {
+        networkPassphrase: NETWORK_PASSPHRASE,
+      });
 
-    const signedTx = TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE);
-    const sendResult = await server.sendTransaction(signedTx);
+      const signedXdr =
+        (signedTxEnvelope as any).signedXdr || (signedTxEnvelope as any).signedTxXdr;
 
-    setResult("Offer TX Hash: " + sendResult.hash);
+      if (!signedXdr) throw new Error("Signing failed");
+
+      const signedTx = TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE);
+      const sendResult = await server.sendTransaction(signedTx);
+
+      setResult("Create Auction TX Hash: " + sendResult.hash);
+    } catch (err: any) {
+      console.error(err);
+      setResult("Error: " + (err.message || err));
+    }
   }
 
+  // Place bid
+  async function placeBid() {
+    if (!publicKey) return setResult("Connect wallet first");
+    if (!hashInput) return setResult("Enter artwork hash");
+    if (!bidAmount) return setResult("Enter bid amount");
 
-  async function acceptOffer() {
-    if (!buyer) return setResult("Enter buyer address");
-    const account = await server.getAccount(publicKey);
+    try {
+      const account = await server.getAccount(publicKey);
+      const timestamp = Math.floor(Date.now() / 1000);
 
-    const tx = new TransactionBuilder(account, {
-      fee: "200000",
-      networkPassphrase: NETWORK_PASSPHRASE,
-    })
-      .addOperation(
-        contract.call(
-          "accept_offer",
-          hexToBytesN(hashInput),
-          nativeToScVal(publicKey, { type: "address" }),
-          nativeToScVal(buyer, { type: "address" })
+      const tx = new TransactionBuilder(account, {
+        fee: "100000",
+        networkPassphrase: NETWORK_PASSPHRASE,
+      })
+        .addOperation(
+          contract.call(
+            "place_bid",
+            hexToBytesN(hashInput),
+            nativeToScVal(publicKey, { type: "address" }),
+            nativeToScVal(parseInt(bidAmount), { type: "u128" }),
+            nativeToScVal(timestamp, { type: "u128" })
+          )
         )
-      )
-      .setTimeout(30)
-      .build();
+        .setTimeout(1000)
+        .build();
 
-    const prepared = await server.prepareTransaction(tx);
-    const { signTransaction } = await import("@stellar/freighter-api");
-    const signedTxEnvelope = await signTransaction(prepared.toXDR(), {
-      networkPassphrase: NETWORK_PASSPHRASE,
-    });
+      const prepared = await server.prepareTransaction(tx);
 
-    const signedXdr =
-      (signedTxEnvelope as any).signedXdr || (signedTxEnvelope as any).signedTxXdr;
+      const { signTransaction } = await import("@stellar/freighter-api");
+      const signedTxEnvelope = await signTransaction(prepared.toXDR(), {
+        networkPassphrase: NETWORK_PASSPHRASE,
+      });
 
-    const signedTx = TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE);
-    const sendResult = await server.sendTransaction(signedTx);
+      const signedXdr =
+        (signedTxEnvelope as any).signedXdr || (signedTxEnvelope as any).signedTxXdr;
 
-    setResult("Accept Offer TX Hash: " + sendResult.hash);
+      if (!signedXdr) throw new Error("Signing failed");
+
+      const signedTx = TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE);
+      const sendResult = await server.sendTransaction(signedTx);
+
+      setResult("Place Bid TX Hash: " + sendResult.hash);
+    } catch (err: any) {
+      console.error(err);
+      setResult("Error: " + (err.message || err));
+    }
+  }
+
+  // Close auction
+  async function closeAuction() {
+    if (!publicKey) return setResult("Connect wallet first");
+    if (!hashInput) return setResult("Enter artwork hash");
+
+    try {
+      const account = await server.getAccount(publicKey);
+      const currentTime = Math.floor(Date.now() / 1000);
+
+      const tx = new TransactionBuilder(account, {
+        fee: "100000",
+        networkPassphrase: NETWORK_PASSPHRASE,
+      })
+        .addOperation(
+          contract.call(
+            "close_auction",
+            hexToBytesN(hashInput),
+            nativeToScVal(publicKey, { type: "address" }),
+            nativeToScVal(currentTime, { type: "u128" })
+          )
+        )
+        .setTimeout(1000)
+        .build();
+
+      const prepared = await server.prepareTransaction(tx);
+
+      const { signTransaction } = await import("@stellar/freighter-api");
+      const signedTxEnvelope = await signTransaction(prepared.toXDR(), {
+        networkPassphrase: NETWORK_PASSPHRASE,
+      });
+
+      const signedXdr =
+        (signedTxEnvelope as any).signedXdr || (signedTxEnvelope as any).signedTxXdr;
+
+      if (!signedXdr) throw new Error("Signing failed");
+
+      const signedTx = TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE);
+      const sendResult = await server.sendTransaction(signedTx);
+
+      setResult("Close Auction TX Hash: " + sendResult.hash);
+    } catch (err: any) {
+      console.error(err);
+      setResult("Error: " + (err.message || err));
+    }
   }
 
   return (
-    <div style={{ padding: 20 }}>
+    <div style={{ padding: 20, fontFamily: "sans-serif" }}>
       <h2>Zeb Contract Tester</h2>
 
       <button onClick={connectWallet}>Connect Wallet</button>
-      <p>Wallet: {publicKey}</p>
+      <p>
+        <strong>Wallet:</strong> {publicKey || "Not connected"}
+      </p>
 
-      <input
-        placeholder="Artwork hash (64 hex chars)"
-        value={hashInput}
-        onChange={(e) => setHashInput(e.target.value)}
-        style={{ width: "400px" }}
-      />
+      <hr />
+
+      <h3>Artwork Information</h3>
+      <div>
+        <input
+          placeholder="Artwork Title"
+          value={titleInput}
+          onChange={(e) => setTitleInput(e.target.value)}
+          style={{ width: "400px", marginRight: "10px" }}
+        />
+        <input
+          placeholder="Artwork Hash (64 hex chars)"
+          value={hashInput}
+          onChange={(e) => setHashInput(e.target.value)}
+          style={{ width: "400px" }}
+        />
+      </div>
 
       <div style={{ marginTop: 10 }}>
-        <button onClick={checkArtworkExists}>Check Exists</button>
         <button onClick={registerArtwork}>Register Artwork</button>
+        <button onClick={checkArtworkExists}>Check Exists</button>
         <button onClick={getCreator}>Get Creator</button>
         <button onClick={getOwner}>Get Owner</button>
       </div>
 
-      <div style={{ marginTop: 10 }}>
+      <hr />
+
+      <h3>Ownership Management</h3>
+      <div>
         <input
           placeholder="New Owner Address"
           value={newOwner}
@@ -348,24 +553,47 @@ async function getOwner() {
         <button onClick={transferOwnership}>Transfer Ownership</button>
       </div>
 
-      <div style={{ marginTop: 10 }}>
-        <input
-          placeholder="Buyer Address"
-          value={buyer}
-          onChange={(e) => setBuyer(e.target.value)}
-          style={{ width: "400px" }}
-        />
-        <input
-          placeholder="Offer Amount"
-          value={offerAmount}
-          onChange={(e) => setOfferAmount(e.target.value)}
-          style={{ width: "200px" }}
-        />
-        <button onClick={makeOffer}>Make Offer</button>
-        <button onClick={acceptOffer}>Accept Offer</button>
+      <hr />
+
+      <h3>Auction Management</h3>
+      <div>
+        <button onClick={checkAuctionExists}>Check Auction Exists</button>
+        <button onClick={getHighestBid}>Get Highest Bid</button>
+        <button onClick={getHighestBidder}>Get Highest Bidder</button>
       </div>
 
-      <p>Result: {result}</p>
+      <div style={{ marginTop: 10 }}>
+        <input
+          placeholder="Start Time (Unix timestamp)"
+          value={startTime}
+          onChange={(e) => setStartTime(e.target.value)}
+          style={{ width: "300px", marginRight: "10px" }}
+        />
+        <input
+          placeholder="End Time (Unix timestamp)"
+          value={endTime}
+          onChange={(e) => setEndTime(e.target.value)}
+          style={{ width: "300px" }}
+        />
+        <button onClick={createAuction}>Create Auction</button>
+      </div>
+
+      <div style={{ marginTop: 10 }}>
+        <input
+          placeholder="Bid Amount"
+          value={bidAmount}
+          onChange={(e) => setBidAmount(e.target.value)}
+          style={{ width: "200px", marginRight: "10px" }}
+        />
+        <button onClick={placeBid}>Place Bid</button>
+        <button onClick={closeAuction}>Close Auction</button>
+      </div>
+
+      <hr />
+
+      <div style={{ marginTop: 20, padding: 10, backgroundColor: "#f0f0f0", borderRadius: 5 }}>
+        <strong>Result:</strong> {result}
+      </div>
     </div>
   );
 }
