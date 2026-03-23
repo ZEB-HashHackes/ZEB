@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { isConnected, requestAccess, getAddress } from '@stellar/freighter-api';
 
 interface FormData {
   username: string;
@@ -11,12 +12,15 @@ interface FormData {
 }
 
 export default function SignupPage() {
+  const router = useRouter();
   const [formData, setFormData] = useState<FormData>({
     username: '',
     password: '',
     confirmPassword: '',
   });
   const [walletConnected, setWalletConnected] = useState(false);
+  const [publicKey, setPublicKey] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -25,21 +29,75 @@ export default function SignupPage() {
     });
   };
 
-  const handleWalletConnect = () => {
-    console.log('Connecting Freighter wallet...');
-    // Mock wallet connect - integrate Freighter SDK here
-    setWalletConnected(true);
+  const handleWalletConnect = async () => {
+    try {
+      const connectedStatus = await isConnected();
+      if (connectedStatus && connectedStatus.isConnected) {
+        const access = await requestAccess();
+        if (access && access.error) {
+          alert(`Access denied: ${access.error}`);
+          return;
+        }
+
+        const publicKeyResult = await getAddress();
+        if (publicKeyResult && publicKeyResult.address) {
+          setPublicKey(publicKeyResult.address);
+          setWalletConnected(true);
+        } else {
+          alert('Failed to get wallet address.');
+        }
+      } else {
+        alert('Freighter wallet not found or not connected. Please install the extension.');
+      }
+    } catch (error) {
+      console.error('Wallet connection error:', error);
+      alert('Error connecting to Freighter wallet.');
+    }
   };
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
+
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
       alert('Passwords do not match!');
       return;
     }
-    console.log('Signup data:', formData);
-    alert('Success! User created with wallet connected.\\n\\nIntegrate full Freighter SDK + backend here.');
+
+    if (!publicKey) {
+      alert('Please connect your wallet first!');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password,
+          publickey: publicKey,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert('Signup successful! Redirecting to login...');
+        router.push('/login');
+      } else {
+        alert(`Signup failed: ${data.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      alert('Error during signup. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
+
 
   const title = 'Create Account';
   const subtitle = 'Join the Zeb decentralized marketplace and connect your wallet';
@@ -181,15 +239,16 @@ export default function SignupPage() {
 
               <button
                 type="submit"
-                disabled={!isValid}
+                disabled={!isValid || loading}
                 className={`w-full font-bold py-5 px-8 rounded-2xl transition-all duration-300 shadow-xl text-lg tracking-wide transform ${
-                  isValid
+                  isValid && !loading
                     ? 'bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 active:scale-95 text-background hover:shadow-2xl ring-2 ring-primary/30 hover:ring-primary/50'
                     : 'bg-foreground/10 text-foreground/50 cursor-not-allowed border border-foreground/20'
                 }`}
               >
-                Sign Up
+                {loading ? 'Creating Account...' : 'Sign Up'}
               </button>
+
             </div>
           </form>
 
