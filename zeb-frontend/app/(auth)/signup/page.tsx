@@ -31,6 +31,8 @@ export default function SignupPage() {
 
   const handleWalletConnect = async () => {
     try {
+      const { isConnected, requestAccess, getAddress } = await import('@stellar/freighter-api');
+      
       const connectedStatus = await isConnected();
       if (connectedStatus && connectedStatus.isConnected) {
         const access = await requestAccess();
@@ -54,6 +56,7 @@ export default function SignupPage() {
       alert('Error connecting to Freighter wallet.');
     }
   };
+
 
   const handleSignup = async (e: React.FormEvent) => {
 
@@ -237,9 +240,17 @@ export default function SignupPage() {
                 {walletConnected ? 'Wallet Connected ✓' : 'Connect Wallet'}
               </button>
 
+              {publicKey && (
+                <div className="p-4 bg-primary/10 border border-primary/20 rounded-xl animate-in fade-in slide-in-from-top-2 duration-300">
+                  <p className="text-xs text-foreground/50 mb-1 uppercase tracking-tighter font-bold">Connected Wallet</p>
+                  <p className="text-sm text-primary font-mono truncate">{publicKey}</p>
+                </div>
+              )}
+
               <button
                 type="submit"
                 disabled={!isValid || loading}
+
                 className={`w-full font-bold py-5 px-8 rounded-2xl transition-all duration-300 shadow-xl text-lg tracking-wide transform ${
                   isValid && !loading
                     ? 'bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 active:scale-95 text-background hover:shadow-2xl ring-2 ring-primary/30 hover:ring-primary/50'
