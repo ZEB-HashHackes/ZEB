@@ -1,162 +1,192 @@
 'use client'
 
-import React from 'react'
-import Image from "next/image"
-import Link from "next/link"
-import { ShieldCheck, Gavel, Clock, DollarSign, Eye } from "lucide-react"
+import React, { useState, useEffect } from 'react'
+import Image from 'next/image'
+import { Clock, ShieldCheck, ShoppingBag, TrendingUp } from 'lucide-react'
 
-export type Status = "NOT_LISTED" | "FIXED_PRICE" | "AUCTION"
+export type Status = 'auction' | 'direct' | 'not_listed' | 'AUCTION' | 'FIXED_PRICE' | 'NOT_LISTED'
 
-export interface NFTCardProps {
-  id: string;
-  title: string;
-  image: string;
-
-  // ownership context
-  isOwner?: boolean;
-  isCreator?: boolean;
-  creatorAddress?: string;
-
-  // listing state
-  status: Status;
-  price?: number;        // for fixed price / starting price
-  currentBid?: number;   // for auction
-  endTime?: number;      // auction timer
-
-  // actions
-  onSell?: () => void;
-  onUpdatePrice?: () => void;
-  onViewAuction?: () => void;
-  onView?: () => void;
-  onCardClick?: () => void;
+interface NFTCardProps {
+  id: string
+  title: string
+  image: string
+  status: Status
+  price: number
+  currentBid?: number
+  endTime?: number
+  isOwner?: boolean
+  isCreator?: boolean
+  onSell?: () => void
+  onUpdatePrice?: () => void
+  onViewAuction?: () => void
+  onView?: () => void
+  onCardClick?: () => void
+  onBuy?: () => void
+  onBid?: () => void
 }
 
+export default function NFTCard({
+  title,
+  image,
+  status,
+  price,
+  currentBid,
+  endTime,
+  isOwner,
+  isCreator,
+  onSell,
+  onUpdatePrice,
+  onViewAuction,
+  onView,
+  onCardClick,
+  onBuy,
+  onBid
+}: NFTCardProps) {
+  const [timeLeft, setTimeLeft] = useState('')
 
-
-export default function NFTCard({ id, title, image, isOwner, isCreator, status, price, currentBid, endTime, onSell, onUpdatePrice, onViewAuction, onView, onCardClick }: NFTCardProps) {
-  const getStatusColor = (s: Status) => {
-    switch (s) {
-      case "NOT_LISTED": return "gray";
-      case "FIXED_PRICE": return "blue";
-      case "AUCTION": return "orange";
+  useEffect(() => {
+    if ((status === 'AUCTION' || status === 'auction') && endTime) {
+      const timer = setInterval(() => {
+        const now = Date.now()
+        const diff = endTime - now
+        if (diff <= 0) {
+          setTimeLeft('Ended')
+          clearInterval(timer)
+        } else {
+          const h = Math.floor(diff / 3600000)
+          const m = Math.floor((diff % 3600000) / 60000)
+          const s = Math.floor((diff % 60000) / 1000)
+          setTimeLeft(`${h}h ${m}m ${s}s`)
+        }
+      }, 1000)
+      return () => clearInterval(timer)
     }
-  };
+  }, [status, endTime])
 
-  const getPrimaryValue = () => {
-    if (status === "FIXED_PRICE" && price) return `Price: ${price} XLM`;
-    if (status === "AUCTION" && currentBid) return `Current Bid: ${currentBid} XLM`;
-    return "Not Listed";
-  };
+  const normalizedStatus = status.toUpperCase()
 
   const getPrimaryAction = () => {
-    if (status === "NOT_LISTED" && onSell) return (
-      <button onClick={onSell} className="w-full bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">
-        Sell
-      </button>
-    );
-    if (status === "FIXED_PRICE" && onUpdatePrice) return (
-      <button onClick={onUpdatePrice} className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
-        Update Price
-      </button>
-    );
-    if (status === "AUCTION") {
-      return onViewAuction ? (
-        <button onClick={onViewAuction} className="w-full bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600">
-          View Auction
+    if (onBuy) {
+      return (
+        <button 
+          onClick={(e) => { e.stopPropagation(); onBuy(); }}
+          className="w-full py-3 bg-primary text-background font-black rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all active:scale-95 flex items-center justify-center gap-2"
+        >
+          <ShoppingBag size={18} />
+          BUY NOW
         </button>
-      ) : (
-        <Link href={`/auction/${id}`} className="w-full block text-center bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600">
-          View Auction
-        </Link>
-      );
+      )
     }
-    return onView ? (
-      <button onClick={onView} className="w-full bg-primary text-background px-4 py-2 rounded-lg hover:shadow-lg">
-        View
-      </button>
-    ) : (
-      <Link href={`/art/${id}`} className="w-full block text-center bg-primary text-background px-4 py-2 rounded-lg hover:shadow-lg">
-        View
-      </Link>
-    );
-  };
+    if (onBid) {
+      return (
+        <button 
+          onClick={(e) => { e.stopPropagation(); onBid(); }}
+          className="w-full py-3 bg-secondary text-background font-black rounded-xl hover:shadow-lg hover:shadow-secondary/25 transition-all active:scale-95 flex items-center justify-center gap-2"
+        >
+          <TrendingUp size={18} />
+          PLACE BID
+        </button>
+      )
+    }
 
-  const getTimeLeft = () => {
-    if (!endTime) return null;
-    const now = Date.now();
-    const left = endTime - now;
-    if (left <= 0) return "Ended";
-    const hours = Math.floor(left / 3600000);
-    const mins = Math.floor((left % 3600000) / 60000);
-    return `${hours}h ${mins}m`;
-  };
+    if (isOwner) {
+      if (normalizedStatus === 'NOT_LISTED') {
+        return (
+          <button 
+            onClick={(e) => { e.stopPropagation(); onSell?.(); }}
+            className="w-full py-3 bg-gradient-to-r from-primary to-secondary text-background font-black rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all active:scale-95"
+          >
+            LIST FOR SALE
+          </button>
+        )
+      }
+      return (
+        <button 
+          onClick={(e) => { e.stopPropagation(); onUpdatePrice?.(); }}
+          className="w-full py-3 border border-surface text-foreground font-black rounded-xl hover:bg-surface/50 transition-all active:scale-95"
+        >
+          MANAGE LISTING
+        </button>
+      )
+    }
+
+    if (normalizedStatus === 'AUCTION') {
+      return (
+        <button 
+          onClick={(e) => { e.stopPropagation(); onViewAuction?.(); }}
+          className="w-full py-3 bg-secondary text-background font-black rounded-xl hover:shadow-lg hover:shadow-secondary/25 transition-all active:scale-95"
+        >
+          VIEW AUCTION
+        </button>
+      )
+    }
+
+    return (
+      <button 
+        onClick={(e) => { e.stopPropagation(); onView?.(); }}
+        className="w-full py-3 border border-surface text-foreground font-black rounded-xl hover:bg-surface/50 transition-all active:scale-95"
+      >
+        VIEW DETAILS
+      </button>
+    )
+  }
 
   return (
-<div 
-  className="group relative bg-surface/50 backdrop-blur-xl rounded-3xl border border-surface/50 p-6 hover:border-primary/75 hover:shadow-2xl hover:shadow-primary/25 transition-all duration-500 overflow-hidden h-full flex flex-col cursor-pointer" 
-  onClick={onCardClick}
-  role="button"
-  tabIndex={0}
-  onKeyDown={(e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      onCardClick?.();
-    }
-  }}
->
-      {/* IMAGE */}
-      <div className="relative rounded-2xl overflow-hidden mb-6 aspect-video bg-gradient-to-br from-muted/50 to-transparent group-hover:scale-[1.02] transition-transform duration-700">
+    <div 
+      onClick={onCardClick}
+      className="group relative bg-surface/30 backdrop-blur-xl rounded-[32px] p-6 border border-surface/50 hover:border-primary/50 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/5 cursor-pointer flex flex-col h-full overflow-hidden"
+    >
+      <div className="relative rounded-2xl overflow-hidden mb-6 aspect-video bg-gradient-to-br from-muted/50 to-transparent">
         <Image 
           src={image} 
           alt={title}
           fill 
-          className="object-cover group-hover:brightness-110 transition-all duration-700"
+          unoptimized
+          className="object-cover transition-all duration-700"
         />
-      </div>
-
-      {/* Status Badge */}
-      <div className={`inline-flex items-center gap-1 bg-${getStatusColor(status)}-500/20 border border-${getStatusColor(status)}-500/40 text-${getStatusColor(status)}-400 px-3 py-1 rounded-full text-xs font-bold mb-4`}>
-        {status === "FIXED_PRICE" && <DollarSign size={12} />}
-        {status === "AUCTION" && <Gavel size={12} />}
-        {status === "NOT_LISTED" && <ShieldCheck size={12} />}
-        <span>{status.replace(/_/g, " ").toUpperCase()}</span>
-      </div>
-
-      {/* Title */}
-      <h3 className="font-black text-xl mb-4">{title}</h3>
-
-      {/* Ownership */}
-      <div className="flex gap-2 mb-4">
-        {isOwner && (
-          <div className="inline-flex items-center gap-1 bg-green-500/20 border border-green-500/40 text-green-400 px-3 py-1 rounded-full text-xs font-bold">
-            <ShieldCheck size={12} />
-            <span>Owned</span>
-          </div>
-        )}
-        {isCreator && (
-          <div className="inline-flex items-center gap-1 bg-primary/20 border border-primary/40 text-primary px-3 py-1 rounded-full text-xs font-bold">
-            Created
+        
+        {normalizedStatus === 'AUCTION' && (
+          <div className="absolute top-4 right-4 bg-background/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 flex items-center gap-2 shadow-xl">
+            <Clock size={14} className="text-secondary animate-pulse" />
+            <span className="text-xs font-black text-white">{timeLeft}</span>
           </div>
         )}
       </div>
 
-      {/* Value */}
-      <div className="mb-6 text-foreground/80 font-semibold text-lg">
-        {getPrimaryValue()}
-        {status === "AUCTION" && endTime && (
-          <div className="text-orange-400 flex items-center gap-1 mt-1 text-sm">
-            <Clock size={14} />
-            <span>{getTimeLeft()}</span>
+      <div className="flex-1 space-y-4">
+        <div className="flex justify-between items-start gap-4">
+          <h3 className="text-xl font-black group-hover:text-primary transition-colors line-clamp-1">{title}</h3>
+          {isCreator && (
+            <div className="bg-primary/20 text-primary p-1 rounded-lg" title="You are the creator">
+              <ShieldCheck size={16} />
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-between items-end bg-surface/50 rounded-2xl p-4 border border-surface/50">
+          <div>
+            <p className="text-[10px] font-black text-foreground/40 uppercase tracking-wider mb-1">
+              {normalizedStatus === 'AUCTION' ? 'Current Bid' : 'Price'}
+            </p>
+            <p className="text-lg font-black text-primary">
+              {normalizedStatus === 'AUCTION' ? (currentBid || price) : price} <span className="text-xs">XLM</span>
+            </p>
           </div>
-        )}
+          {normalizedStatus === 'AUCTION' && (
+            <div className="text-right">
+              <p className="text-[10px] font-black text-foreground/40 uppercase tracking-wider mb-1">Status</p>
+              <div className="flex items-center gap-1.5 text-xs font-black text-secondary">
+                <div className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />
+                LIVE
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Action */}
-      <div className="mt-auto pt-4 border-t border-surface/30">
+      <div className="mt-6 pt-4 border-t border-surface/30">
         {getPrimaryAction()}
       </div>
-
-      {/* Shine */}
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 opacity-0 group-hover:opacity-100 transition-opacity duration-700 -translate-x-full group-hover:translate-x-full" />
     </div>
   )
 }

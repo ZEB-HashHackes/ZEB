@@ -61,6 +61,16 @@ pub fn register_artwork(
 
     creator.require_auth();
 
+    // 1. Deduct Fee
+    let fee_token = crate::storage::get_fee_token(&e);
+    let fee_amount = crate::storage::get_fee_amount(&e);
+    let zeb_receiver = crate::storage::get_zeb_receiver(&e);
+
+    if fee_amount > 0 {
+        let client = soroban_sdk::token::Client::new(&e, &fee_token);
+        client.transfer(&creator, &zeb_receiver, &(fee_amount as i128));
+    }
+
     let mut artworks = artworks_map(&e);
 
     if artworks.contains_key(hash.clone()) {

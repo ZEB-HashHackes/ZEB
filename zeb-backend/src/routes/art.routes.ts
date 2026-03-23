@@ -35,31 +35,48 @@ router.post("/", upload.single("file"), async (req, res) => {
       });
     }
 
-    const { hashHex } =
-      await ArtService.storeFile(req.file);
+    const {
+      contentHash,
+      similarityHash,
+      similarityMethod,
+      fileType,
+      mimeType
+    } = await ArtService.storeFile(req.file);
 
     const art = await Art.create({
       title,
       description,
-      filePath: `uploads/${hashHex}`,
-      contentHash: hashHex,
+      filePath: `uploads/${contentHash}`,
+      fileType,
+      mimeType,
+      contentHash,
+      similarityHash,
+      similarityMethod,
       creatorBy,
       ownedBy,
       category,
       minPrice
-    });
+    } as any);
 
     res.status(201).json({
       status: "ok",
       message: "Art created successfully",
       data: {
-        artId: art._id,
-        hash: hashHex
+        artId: (art as any)._id,
+        hash: contentHash
       }
     });
 
-  } catch (err) {
+  } catch (err: any) {
     console.error("Create art error:", err);
+    
+    if (err.message.includes("Duplicate") || err.message.includes("Similar")) {
+      return res.status(409).json({
+        status: "error",
+        message: err.message
+      });
+    }
+
     res.status(500).json({
       status: "error",
       message: "Internal server error"
@@ -98,6 +115,36 @@ router.get("/:id", async (req, res) => {
     const art = await Art.findById(req.params.id);
     if (!art) res.status(404).json({status:"error", message:"Art not found."});
     res.status(200).json({status:"ok", data: art});
+});
+
+// GET all artworks (Marketplace)
+router.get("/", async (req, res) => {
+  try {
+    const arts = await Art.find().sort({ createdAt: -1 });
+    res.status(200).json({ status: "ok", data: arts });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: "Error fetching artworks" });
+  }
+});
+
+// GET artworks by creator
+router.get("/creator/:address", async (req, res) => {
+  try {
+    const arts = await Art.find({ creatorBy: req.params.address }).sort({ createdAt: -1 });
+    res.status(200).json({ status: "ok", data: arts });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: "Error fetching creator's artworks" });
+  }
+});
+
+// GET artworks by owner
+router.get("/owner/:address", async (req, res) => {
+  try {
+    const arts = await Art.find({ ownedBy: req.params.address }).sort({ createdAt: -1 });
+    res.status(200).json({ status: "ok", data: arts });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: "Error fetching owned artworks" });
+  }
 });
 
 

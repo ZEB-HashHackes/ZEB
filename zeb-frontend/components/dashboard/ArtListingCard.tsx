@@ -36,6 +36,7 @@ export default function ArtListingCard({
           src={img} 
           alt={title}
           fill 
+          unoptimized
           className="object-cover group-hover:brightness-110 transition-all duration-700"
         />
         {/* Gradient Overlay */}

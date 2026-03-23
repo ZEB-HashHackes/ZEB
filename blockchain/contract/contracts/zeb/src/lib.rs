@@ -24,6 +24,18 @@ impl ZebContract {
         artwork_logic::artwork_exists(e, hash)
     }
 
+    pub fn set_config(
+        e: Env,
+        caller: Address,
+        token: Address,
+        amount: u128,
+        receiver: Address,
+    ) -> Result<(), ZebError> {
+        caller.require_auth();
+        crate::storage::set_config(&e, token, amount, receiver);
+        Ok(())
+    }
+
     pub fn get_highest_bid(
         e: Env,
         hash: BytesN<32>,

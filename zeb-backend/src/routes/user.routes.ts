@@ -24,6 +24,18 @@ router.post("/login",auth ,async (req, res) => {
   res.json({ message: "Login successful", userId: (req as any).user._id });
 });
 
+router.get("/:publickey", async (req, res) => {
+  try {
+    const user = await User.findOne({ publickey: req.params.publickey });
+    if (!user) {
+      return res.status(404).json({ status: "error", message: "User not found" });
+    }
+    res.json({ status: "ok", data: user });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: "Error fetching user" });
+  }
+});
+
 
 export default router;
 

@@ -29,7 +29,7 @@ export interface IArt extends Document {
   fileType: FileType;
   mimeType: string;
   contentHash: string;
-  similarityHash?: string;
+  similarityHash?: string | null;
   similarityMethod: SimilarityMethod;
   status: ArtStatus;
   creatorBy: string;
@@ -53,7 +53,7 @@ const artSchema: Schema<IArt> = new Schema<IArt>({
   creatorBy: {type: String, required: true},
   ownedBy: {type: String, required: true},
   category: {type: String, 
-            enum: ["image", "drawing", "2d", "3d", "music", "text"],
+            enum: ["digital art", "book", "literary work", "music", "video", "image", "drawing", "2d", "3d", "text"],
             required: true},
   minPrice: {type: Number, required: true},
 }, {timestamps: true});

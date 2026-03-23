@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { Search, Filter, BookOpen, Music, Palette, UploadCloud } from 'lucide-react'
 import NFTCard from './NFTCard'
 import NFTDetailModal from './NFTDetailModal'
-import ArtUploadModal from './ArtUploadModal'
 import type { NFTCardProps, Status } from './NFTCard'
 
 interface NFT {
@@ -55,11 +54,53 @@ export default function NFTsTab() {
   const [selectedStatus, setSelectedStatus] = useState<'all' | 'auction'>('all')
   const [selectedNFT, setSelectedNFT] = useState<NFT | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [uploadOpen, setUploadOpen] = useState(false)
-  const [createdNFTs, setCreatedNFTs] = useState(rawCreatedNFTs)
-  const [nextCreatedId, setNextCreatedId] = useState(Math.max(...rawCreatedNFTs.map(nft => nft.id)) + 1)
+  const [nfts, setNfts] = useState<NFT[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
-  const nfts = activeTab === 'owned' ? rawOwnedNFTs : activeTab === 'created' ? createdNFTs : rawSellingNFTs
+  React.useEffect(() => {
+    const fetchNFTs = async () => {
+      setIsLoading(true);
+      try {
+        const { getAddress } = await import('@stellar/freighter-api');
+        const { address } = await getAddress();
+        
+        const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://zeb-1.onrender.com/api';
+        let endpoint = `${baseUrl}/arts`;
+        if (activeTab === 'owned') {
+          endpoint = `${baseUrl}/arts/owner/${address}`;
+        } else if (activeTab === 'created') {
+          endpoint = `${baseUrl}/arts/creator/${address}`;
+        }
+
+        const response = await fetch(endpoint);
+        const result = await response.json();
+        
+        if (result.status === 'ok') {
+          const mappedNFTs = result.data.map((item: any) => ({
+            id: item._id,
+            title: item.title,
+            description: item.description,
+            creator: item.creatorBy,
+            owner: item.ownedBy,
+            price: `${item.minPrice} XLM`,
+            img: item.filePath.includes('uploads/') 
+              ? `${baseUrl.replace('/api', '')}/${item.filePath}` 
+              : item.filePath,
+            type: item.category === 'image' ? 'digital art' : item.category,
+            genre: 'other',
+          }));
+          setNfts(mappedNFTs);
+        }
+      } catch (error) {
+        console.error('Error fetching NFTs:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchNFTs();
+  }, [activeTab, refreshTrigger]);
 
   const filteredNFTs = useMemo(() => {
     return nfts.filter((nft) => {
@@ -168,10 +209,10 @@ export default function NFTsTab() {
                 </select>
               )}
             </div>
-            <button onClick={() => setUploadOpen(true)} className="flex items-center gap-2 px-4 py-1 bg-gradient-to-r from-primary to-secondary text-background font-bold rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all whitespace-nowrap">
+            <Link href="/dashboard/upload" className="flex items-center gap-2 px-4 py-1 bg-gradient-to-r from-primary to-secondary text-background font-bold rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all whitespace-nowrap">
               <UploadCloud size={16} />
               Upload New
-            </button>
+            </Link>
           </div>
 
           {/* Grid */}
@@ -227,21 +268,12 @@ export default function NFTsTab() {
                 <UploadCloud size={64} className="mx-auto mb-6 text-primary opacity-50" />
                 <h3 className="text-2xl font-black mb-4 text-foreground/70">{activeTab === 'owned' ? 'Empty Collection' : activeTab === 'created' ? 'Nothing Created' : 'Nothing Selling'}</h3>
                 <p className="text-xl mb-8 max-w-md mx-auto leading-relaxed">{emptyMessage}</p>
-                <button 
-                  onClick={() => {
-                    if (activeTab === 'owned') {
-                      window.location.href = '/market'
-                    } else if (activeTab === 'listings') {
-                      // TODO: new auction modal
-                      console.log('Open new auction')
-                    } else {
-                      setUploadOpen(true)
-                    }
-                  }} 
+                <Link 
+                  href={activeTab === 'owned' ? '/market' : '/dashboard/upload'}
                   className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-primary to-secondary text-background font-bold rounded-2xl hover:shadow-2xl hover:shadow-primary/30 transition-all text-lg"
                 >
-                  {activeTab === 'owned' ? 'Browse Marketplace' : activeTab === 'created' ? 'Create First NFT' : 'List for Sale'}
-                </button>
+                  {activeTab === 'owned' ? 'Browse Marketplace' : activeTab === 'created' ? 'Create First NFT' : 'Register Artwork'}
+                </Link>
               </div>
             )}
             <NFTDetailModal
@@ -256,26 +288,6 @@ export default function NFTsTab() {
               onEdit={(nftId) => {
                 console.log('Edit NFT', nftId)
                 setIsModalOpen(false)
-              }}
-            />
-            <ArtUploadModal
-              isOpen={uploadOpen}
-              onClose={() => setUploadOpen(false)}
-              onUpload={(newArt) => {
-                const newId = nextCreatedId
-                setCreatedNFTs(prev => [...prev, {
-                  id: newId,
-                  title: newArt.title,
-                  description: newArt.description,
-                  price: newArt.minPrice || 'TBD XLM',
-                  img: newArt.img,
-                  type: newArt.category as any,
-                  genre: newArt.genre as any,
-                  creator: 'GCF2A...3X9Y (You)',
-                  owner: undefined,
-                  status: undefined,
-                }])
-                setNextCreatedId(prev => prev + 1)
               }}
             />
           </div>

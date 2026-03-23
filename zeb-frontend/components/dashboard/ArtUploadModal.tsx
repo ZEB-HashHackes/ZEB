@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from 'react'
 import Image from 'next/image'
-import { X, UploadCloud, Image as ImageIcon, Type, BookOpen, Music, Video, Tag, DollarSign } from 'lucide-react'
+import { X, UploadCloud, Image as ImageIcon, Type, BookOpen, Music, Video, Tag, DollarSign, Clock } from 'lucide-react'
 
 interface ArtUploadModalProps {
   isOpen: boolean
@@ -37,6 +37,7 @@ export default function ArtUploadModal({ isOpen, onClose, onUpload }: ArtUploadM
   })
   const [preview, setPreview] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [isDuplicate, setIsDuplicate] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   if (!isOpen) return null
@@ -62,32 +63,128 @@ export default function ArtUploadModal({ isOpen, onClose, onUpload }: ArtUploadM
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.title.trim() || !preview) return
+    if (!formData.title.trim() || !preview || !fileRef.current?.files?.[0]) return
 
     setIsUploading(true)
+    setIsDuplicate(false)
     
-    // Simulate API upload
-    setTimeout(() => {
-      onUpload({
-        title: formData.title,
-        description: formData.description || 'No description provided',
-        category: formData.category,
-        genre: formData.genre,
-        img: preview!,
-        listImmediately: listingOptions.listImmediately,
-        ...(listingOptions.listImmediately && {
-          listingType: listingOptions.listingType,
-          ...(listingOptions.listingType === 'fixed' && { minPrice: formData.minPrice }),
-          ...(listingOptions.listingType === 'auction' && {
-            startBid: listingOptions.startBid,
-            endTime: listingOptions.endDateTime ? new Date(listingOptions.endDateTime).getTime() : undefined
-          })
-        })
+    try {
+      const file = fileRef.current.files[0];
+      const { isConnected, getAddress } = await import('@stellar/freighter-api');
+      
+      const connected = await isConnected();
+      if (!connected.isConnected) {
+        alert("Please connect your Freighter wallet first.");
+        setIsUploading(false);
+        return;
+      }
+
+      const { address: userAddress } = await getAddress();
+      
+      // 1. Upload to backend to get the hash
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      formDataUpload.append('title', formData.title);
+      formDataUpload.append('description', formData.description);
+      formDataUpload.append('creatorBy', userAddress);
+      formDataUpload.append('ownedBy', userAddress);
+      formDataUpload.append('category', formData.category);
+      formDataUpload.append('minPrice', formData.minPrice || '0');
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/arts`, {
+        method: 'POST',
+        body: formDataUpload,
+      });
+
+      if (response.status === 409) {
+        setIsDuplicate(true);
+        setIsUploading(false);
+        return;
+      }
+
+      const result = await response.json();
+      if (result.status !== 'ok') {
+        throw new Error(result.message || 'Upload failed');
+      }
+
+      const { hash } = result.data;
+
+      // 2. Register on Smart Contract (Soroban)
+      const { 
+        rpc, 
+        Networks, 
+        TransactionBuilder, 
+        Contract, 
+        nativeToScVal 
+      } = await import("@stellar/stellar-sdk");
+      
+      const RPC_URL = "https://soroban-testnet.stellar.org";
+      const NETWORK_PASSPHRASE = Networks.TESTNET;
+      const CONTRACT_ID = "CAG3L7MRMVAIITRM7JVJ2G3KE6C6WYS3MVAIGXV3DXKMR7UA667J7LBQ";
+
+      const server = new rpc.Server(RPC_URL);
+      const contract = new Contract(CONTRACT_ID);
+
+      let account;
+      try {
+        account = await server.getAccount(userAddress);
+      } catch (err: any) {
+        if (err.message?.includes("Account not found")) {
+            throw new Error(`Account not found on Testnet. Please fund your account (${userAddress}) using Friendbot.`);
+        }
+        throw err;
+      }
+
+      const timestamp = Math.floor(Date.now() / 1000);
+      const hexToBytesN = (hex: string) => {
+        const bytes = Uint8Array.from(
+          hex.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16))
+        );
+        return nativeToScVal(bytes, { type: "bytes" });
+      };
+
+      const tx = new TransactionBuilder(account, {
+        fee: "100000",
+        networkPassphrase: NETWORK_PASSPHRASE,
       })
-      setIsUploading(false)
-      onClose()
+        .addOperation(
+          contract.call(
+            "register_artwork",
+            nativeToScVal(formData.title, { type: "string" }),
+            hexToBytesN(hash),
+            nativeToScVal(userAddress, { type: "address" }),
+            nativeToScVal(timestamp, { type: "u128" })
+          )
+        )
+        .setTimeout(1000)
+        .build();
+
+      const prepared = await server.prepareTransaction(tx);
+      const { signTransaction } = await import("@stellar/freighter-api");
+      
+      const signedTxEnvelope = await signTransaction(prepared.toXDR(), {
+        networkPassphrase: NETWORK_PASSPHRASE,
+      });
+
+      const signedXdr = (signedTxEnvelope as any).signedXdr || (signedTxEnvelope as any).signedTxXdr;
+      if (!signedXdr) throw new Error("Signing failed");
+
+      const signedTx = TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE);
+      const sendResult = await server.sendTransaction(signedTx);
+      
+      onUpload({ 
+        ...formData, 
+        img: preview, 
+        listImmediately: listingOptions.listImmediately, 
+        listingType: listingOptions.listingType 
+      });
+      
+      alert(`Artwork successfully registered!\nBackend Hash: ${hash}\nBlockchain TX: ${sendResult.hash}`);
+      onClose();
+
       // Reset form
       setFormData({
         title: '',
@@ -95,15 +192,43 @@ export default function ArtUploadModal({ isOpen, onClose, onUpload }: ArtUploadM
         category: 'digital art',
         genre: 'other',
         minPrice: '',
-      })
-      setPreview(null)
-      if (fileRef.current) fileRef.current.value = ''
-    }, 1500)
+      });
+      setPreview(null);
+      if (fileRef.current) fileRef.current.value = '';
+
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      alert(`Registration failed: ${error.message}`);
+    } finally {
+      setIsUploading(false);
+    }
   }
 
   return (
     <div className="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in zoom-in duration-300">
       <div className="bg-surface/95 backdrop-blur-2xl border border-surface/50 rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        {/* Under Review State */}
+        {isDuplicate && (
+          <div className="absolute inset-0 z-[1100] bg-surface/95 backdrop-blur-xl flex items-center justify-center p-12 rounded-3xl animate-in fade-in duration-500">
+            <div className="text-center space-y-8 max-w-md">
+              <div className="mx-auto w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center">
+                <Clock size={48} className="text-primary animate-pulse" />
+              </div>
+              <div className="space-y-4">
+                <h3 className="text-3xl font-black text-foreground">Under Review</h3>
+                <p className="text-xl text-foreground/70 leading-relaxed">
+                  Similar artwork already exists in our system. Our admin team will review your submission and respond within <span className="text-primary font-bold">24-48 hours</span>.
+                </p>
+              </div>
+              <button 
+                onClick={onClose}
+                className="w-full py-5 bg-gradient-to-r from-primary to-secondary text-background font-black rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all text-xl shadow-lg shadow-primary/20"
+              >
+                Understood
+              </button>
+            </div>
+          </div>
+        )}
         {/* Header */}
         <div className="sticky top-0 bg-surface/100 backdrop-blur-xl border-b border-surface/50 p-6 rounded-t-3xl">
           <div className="flex items-center justify-between">
