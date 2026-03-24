@@ -25,11 +25,16 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
 
+// Support for serving static files with proper CORS and MIME-types
 app.use("/uploads", (req, res, next) => {
-  const ext = path.extname(req.url);
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  
+  const ext = path.extname(req.url).toLowerCase();
   if (!ext) {
-    // Basic fallback for hashed files without extensions - set as image/jpeg or similar
-    // Browsers are usually good at interpreting image data if the header says image/*
+    // Basic fallback for hashed files without extensions
+    // Defaulting to image/jpeg as most uploaded arts were images
     res.setHeader("Content-Type", "image/jpeg"); 
   }
   next();
@@ -39,8 +44,8 @@ dotenv.config();
 
 const PORT = process.env.PORT || 5000
 
-app.use("/api/users/", users);
-app.use("/api/arts/", arts);
+app.use("/api/users", users);
+app.use("/api/arts", arts);
 app.use("/api/verify/", verification);
 app.use("/api/auction/", auction);
 app.use("/api/activity/", activity);

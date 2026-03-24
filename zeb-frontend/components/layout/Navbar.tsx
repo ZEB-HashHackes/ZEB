@@ -1,34 +1,44 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
-import { Wallet, User } from 'lucide-react';
+import { Search } from 'lucide-react';
 
-export default function Navbar({ dashboardMode = false }: { dashboardMode?: boolean }) {
+export default function Navbar({ showSearch = false }: { showSearch?: boolean }) {
   return (
-    <nav className="fixed top-0 w-full z-50 bg-surface/40 backdrop-blur-md border-b border-surface">
+    <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {/* Cyan to Magenta Gradient logo */}
-          <span className="text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
-            ZEB Web
-          </span>
+        <div className="flex-1 flex items-center">
+          <Link href="/" className="text-2xl font-black tracking-tighter text-slate-900">
+            ZEB
+          </Link>
         </div>
         
-        <div className="flex items-center gap-6">
-          <div className="hidden md:flex items-center gap-6 text-sm font-medium text-foreground/80">
-            <a href="#how-it-works" className="hover:text-primary transition-colors">How It Works</a>
-            <a href="#marketplace" className="hover:text-primary transition-colors">Marketplace</a>
-          </div>
-          
-{dashboardMode ? (
-            <Link href="/dashboard/profile" className="flex items-center gap-2 bg-gradient-to-r from-primary/20 to-secondary/20 border border-primary/50 text-primary px-5 py-2.5 rounded-lg font-medium shadow-[0_0_15px_rgba(51,255,235,0.3)] hover:shadow-[0_0_25px_rgba(51,255,235,0.6)] transition-all duration-300">
-              <User size={20} />
-            </Link>
-          ) : (
-            <Link href="/signup" className="flex items-center gap-2 bg-surface/80 border border-primary text-primary px-5 py-2.5 rounded-lg font-medium shadow-[0_0_15px_rgba(51,255,235,0.4)] hover:shadow-[0_0_25px_rgba(51,255,235,0.8)] transition-all duration-300">
-              <Wallet size={18} />
-              <span className="hidden sm:inline">Connect Wallet</span>
-            </Link>
+        <div className="hidden md:flex flex-1 justify-center items-center gap-12">
+          <Link href="/marketplace" className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 hover:text-slate-900 transition-colors">Explore</Link>
+          <Link href="/auctions" className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 hover:text-slate-900 transition-colors">Auctions</Link>
+          <Link href="/dashboard" className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 hover:text-slate-900 transition-colors">Dashboard</Link>
+        </div>
+
+        <div className="flex-1 flex items-center justify-end gap-6">
+          {showSearch && (
+            <div className="relative hidden lg:block group">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search size={14} className="text-slate-300 group-focus-within:text-cyan-500 transition-colors" />
+              </div>
+              <input 
+                type="text" 
+                placeholder="Search vault..." 
+                className="bg-slate-50 border border-slate-100 rounded-lg py-2 pl-9 pr-4 text-[10px] font-bold text-slate-900 placeholder:text-slate-300 focus:outline-none focus:border-cyan-400/30 transition-all w-64"
+              />
+            </div>
           )}
+          <Link 
+            href="/signup"
+            className="px-6 py-2.5 bg-cyan-400 text-slate-900 text-[10px] font-black uppercase tracking-[0.2em] rounded-lg hover:bg-cyan-500 transition-all shadow-md shadow-cyan-400/10"
+          >
+            Connect Wallet
+          </Link>
         </div>
       </div>
     </nav>

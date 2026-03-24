@@ -40,13 +40,60 @@ router.post("/", upload.single("file"), async (req, res) => {
       similarityHash,
       similarityMethod,
       fileType,
-      mimeType
+      mimeType,
+      filePath: serviceFilePath
     } = await ArtService.storeFile(req.file);
+
+    // 1. Check for Exact Duplicates (Content Hash)
+    const exactExisting = await Art.findOne({ contentHash });
+    if (exactExisting) {
+      if (exactExisting.creatorBy === creatorBy) {
+        // Same creator: Allow resumption
+        return res.status(200).json({
+          status: "ok",
+          message: "Artwork already exists for you. Resuming registration.",
+          data: {
+            artId: exactExisting._id,
+            hash: contentHash
+          }
+        });
+      } else {
+        // Different creator: Conflict
+        return res.status(409).json({
+          status: "error",
+          message: "Duplicate artwork detected (this content is already registered by another creator)"
+        });
+      }
+    }
+
+    // 2. Check for Similar Artworks
+    if (similarityHash) {
+      const similarExisting = await Art.findOne({ similarityHash, similarityMethod });
+      if (similarExisting) {
+        if (similarExisting.creatorBy === creatorBy) {
+           // Same creator: Allow resumption
+           return res.status(200).json({
+            status: "ok",
+            message: "Similar artwork already exists for you. Resuming registration.",
+            data: {
+              artId: similarExisting._id,
+              hash: contentHash
+            }
+          });
+        } else {
+          // Different creator: Conflict
+          return res.status(409).json({
+            status: "error",
+            message: "Similar artwork already exists (plagiarism check failed)"
+          });
+        }
+      }
+    }
 
     const art = await Art.create({
       title,
       description,
-      filePath: `uploads/${contentHash}`,
+      filePath: serviceFilePath,
       fileType,
       mimeType,
       contentHash,
@@ -54,8 +101,8 @@ router.post("/", upload.single("file"), async (req, res) => {
       similarityMethod,
       creatorBy,
       ownedBy,
-      category,
-      minPrice
+      category: category || "image",
+      minPrice: parseFloat(minPrice || "0")
     } as any);
 
     res.status(201).json({
@@ -68,7 +115,7 @@ router.post("/", upload.single("file"), async (req, res) => {
     });
 
   } catch (err: any) {
-    console.error("Create art error:", err);
+    console.error("CRITICAL: Create art error:", err);
     
     if (err.message.includes("Duplicate") || err.message.includes("Similar")) {
       return res.status(409).json({
@@ -77,9 +124,12 @@ router.post("/", upload.single("file"), async (req, res) => {
       });
     }
 
+    // Return more detail in 500 to help debug
     res.status(500).json({
       status: "error",
-      message: "Internal server error"
+      message: "Internal server error",
+      detail: err.message,
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
     });
   }
 });

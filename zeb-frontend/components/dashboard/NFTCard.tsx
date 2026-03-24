@@ -155,9 +155,9 @@ export default function NFTCard({
 
       <div className="flex-1 space-y-4">
         <div className="flex justify-between items-start gap-4">
-          <h3 className="text-xl font-black group-hover:text-primary transition-colors line-clamp-1">{title}</h3>
+          <h3 className="text-xl font-black text-slate-900 group-hover:text-primary transition-colors line-clamp-1">{title}</h3>
           {isCreator && (
-            <div className="bg-primary/20 text-primary p-1 rounded-lg" title="You are the creator">
+            <div className="bg-primary/20 text-slate-900 p-1 rounded-lg" title="You are the creator">
               <ShieldCheck size={16} />
             </div>
           )}
@@ -168,8 +168,8 @@ export default function NFTCard({
             <p className="text-[10px] font-black text-foreground/40 uppercase tracking-wider mb-1">
               {normalizedStatus === 'AUCTION' ? 'Current Bid' : 'Price'}
             </p>
-            <p className="text-lg font-black text-primary">
-              {normalizedStatus === 'AUCTION' ? (currentBid || price) : price} <span className="text-xs">XLM</span>
+            <p className="text-lg font-black text-slate-900">
+              {normalizedStatus === 'AUCTION' ? (currentBid || price) : price} <span className="text-xs text-slate-400">XLM</span>
             </p>
           </div>
           {normalizedStatus === 'AUCTION' && (

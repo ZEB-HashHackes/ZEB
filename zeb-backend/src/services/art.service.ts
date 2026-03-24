@@ -14,19 +14,8 @@ export class ArtService {
     const { fileType, contentHash, similarityHash, similarityMethod } = 
       await VerificationService.verify(file.buffer, file.mimetype);
 
-    // Check for exact duplicates
-    const existingExact = await Art.findOne({ contentHash });
-    if (existingExact) {
-      throw new Error("Duplicate artwork detected (exact match)");
-    }
-
-    // Check for near duplicates (Similarity)
-    if (similarityHash) {
-      const similarArt = await Art.findOne({ similarityHash, similarityMethod });
-      if (similarArt) {
-         throw new Error("Similar artwork already exists");
-      }
-    }
+    // Note: Duplicate and similarity checks moved to routes to allow for "Resume Registration" flow
+    // (where the same creator can retry a failed upload).
 
     const ext = file.mimetype.split("/")[1] || "png";
     const fileName = `${contentHash}.${ext}`;

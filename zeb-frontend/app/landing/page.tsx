@@ -7,11 +7,11 @@ import Footer from '../../components/layout/Footer';
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-background text-foreground overflow-hidden font-sans">
+    <main className="min-h-screen bg-white text-slate-900 overflow-hidden font-sans">
       <Navbar />
       <Hero />
-      <HowItWorks />
       <MarketplacePreview />
+      <HowItWorks />
       <CTA />
       <Footer />
     </main>

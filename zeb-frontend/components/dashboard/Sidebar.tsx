@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 
-export type TabType = 'overview' | 'my-works' | 'owned' | 'marketplace' | 'profile'
+export type TabType = 'overview' | 'my-works' | 'earnings' | 'settings'
 
 interface SidebarProps {
   activeTab: TabType
@@ -17,42 +17,55 @@ interface SidebarProps {
 export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
   const menuItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'my-works', label: 'My Works', icon: Palette },
-    { id: 'owned', label: 'Owned', icon: Briefcase },
-    { id: 'marketplace', label: 'Marketplace', icon: ShoppingBag },
-    { id: 'profile', label: 'Profile', icon: User },
+    { id: 'my-works', label: 'My Collections', icon: Palette },
+    { id: 'earnings', label: 'Earnings', icon: Briefcase },
+    { id: 'settings', label: 'Settings', icon: ShoppingBag },
   ] as const
 
   return (
-    <aside className="fixed left-0 top-20 bottom-0 w-64 bg-surface/30 backdrop-blur-2xl border-r border-surface/50 p-6 hidden lg:flex flex-col z-40">
-      <div className="space-y-2 flex-1">
+    <aside className="fixed left-0 top-20 bottom-0 w-72 bg-white border-r border-slate-100 p-8 hidden lg:flex flex-col z-40">
+      {/* Profile Section */}
+      <div className="flex items-center gap-4 mb-8 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+         <div className="w-12 h-12 rounded-xl bg-slate-900 flex items-center justify-center font-black text-white text-xs">AV</div>
+         <div>
+            <p className="text-sm font-black text-slate-900">Creator Panel</p>
+            <p className="text-[10px] font-bold text-slate-400">Manage assets</p>
+         </div>
+      </div>
+
+      <Link 
+        href="/dashboard/upload"
+        className="mb-8 flex items-center justify-center gap-2 w-full py-4 bg-slate-900 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-slate-800 transition-all shadow-lg shadow-slate-200"
+      >
+        <PlusCircle size={16} />
+        Create New
+      </Link>
+
+      <div className="space-y-3 flex-1">
         {menuItems.map((item) => (
           <button
             key={item.id}
             onClick={() => onTabChange(item.id as TabType)}
-            className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-bold transition-all
+            className={`w-full flex items-center gap-4 px-5 py-3.5 rounded-2xl font-black transition-all text-xs uppercase tracking-widest
               ${activeTab === item.id 
-                ? 'bg-gradient-to-r from-primary/20 to-secondary/20 text-primary border border-primary/30 shadow-lg shadow-primary/5' 
-                : 'text-foreground/60 hover:text-foreground hover:bg-surface/50 border border-transparent'}`}
+                ? 'bg-cyan-50/50 text-cyan-600 border border-cyan-100 shadow-sm' 
+                : 'text-slate-400 hover:text-slate-900 hover:bg-slate-50 border border-transparent'}`}
           >
-            <item.icon size={22} className={activeTab === item.id ? 'text-primary' : 'text-foreground/40'} />
+            <item.icon size={18} className={activeTab === item.id ? 'text-cyan-500' : 'text-slate-300'} />
             {item.label}
           </button>
         ))}
-        
-        <Link
-          href="/dashboard/upload"
-          className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-black bg-gradient-to-r from-primary to-secondary text-background hover:shadow-xl hover:shadow-primary/30 transition-all transform hover:-translate-y-0.5 active:scale-95 mt-8"
-        >
-          <PlusCircle size={22} />
-          Upload New
-        </Link>
       </div>
 
-      <button className="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-red-400/70 hover:text-red-400 hover:bg-red-400/5 transition-all mb-4">
-        <LogOut size={22} />
-        Log Out
-      </button>
+      <div className="mt-auto pt-8 border-t border-slate-50">
+         <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-300 mb-2">Verification Status</p>
+            <div className="flex items-center gap-2">
+               <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+               <span className="text-[10px] font-black text-slate-900">Artist Verified</span>
+            </div>
+         </div>
+      </div>
     </aside>
   )
 }

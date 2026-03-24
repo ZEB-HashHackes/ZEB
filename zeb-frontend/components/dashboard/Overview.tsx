@@ -1,57 +1,77 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { 
-  TrendingUp, TrendingDown, DollarSign, 
-  Palette, ShoppingCart, Clock 
+import {
+  User, DollarSign, Image as ImageIcon, Briefcase, Activity, Plus
 } from 'lucide-react'
 import { motion } from 'framer-motion'
+import Link from 'next/link'
+
+// Helper component for displaying stats
+const StatCard = ({ label, value, icon, trend }: { label: string; value: string; icon: React.ReactNode; trend?: string }) => (
+  <div className="flex items-center gap-3">
+    <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center">
+      {icon}
+    </div>
+    <div>
+      <p className="text-[9px] font-black uppercase tracking-widest text-slate-300">{label}</p>
+      <p className="text-lg font-black text-slate-900">{value}</p>
+    </div>
+  </div>
+);
 
 export default function Overview() {
-  const [stats, setStats] = useState({
-    totalCreated: 0,
-    totalSold: 0,
-    totalGained: 0,
-    listedItems: 0
-  })
+  const [stats, setStats] = React.useState({
+    created: 0,
+    owned: 0,
+    bought: 0,
+    uploaded: 0,
+    totalEarnings: 0
+  });
+  const [username, setUsername] = React.useState('Arthemus');
+  const [loading, setLoading] = React.useState(true);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const { getAddress } = await import('@stellar/freighter-api')
-        const { address } = await getAddress()
+  React.useEffect(() => {
+    const address = localStorage.getItem('zeb_user_address');
+    const storedUsername = localStorage.getItem('zeb_username');
+    if (storedUsername) setUsername(storedUsername);
 
-        const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000/api'
-        const res = await fetch(`${baseUrl}/arts/creator/${address}`)
-        const data = await res.json()
-
-        if (data.status === 'ok') {
-          const arts = data.data
-          const created = arts.length
-          const sold = arts.filter((art: any) => art.ownedBy !== address)
-          const totalSold = sold.length
-          const totalGained = sold.reduce((sum: number, art: any) => sum + (Number(art.minPrice) || 0), 0)
-          
-          const resOwned = await fetch(`${baseUrl}/arts/owner/${address}`)
-          const dataOwned = await resOwned.json()
-          let listedItems = 0
-          if (dataOwned.status === 'ok') {
-            listedItems = dataOwned.data.filter((art: any) => art.listingStatus === 'AUCTION' || art.listingStatus === 'FIXED_PRICE').length
-          }
-
-          setStats({
-            totalCreated: created,
-            totalSold,
-            totalGained,
-            listedItems
-          })
-        }
-      } catch (err) {
-        console.error('Error fetching stats:', err)
-      }
+    if (address) {
+      fetchStats(address);
+    } else {
+      setLoading(false); // If no address, stop loading and show default 0s
     }
-    fetchStats()
-  }, [])
+  }, []);
+
+  const fetchStats = async (address: string) => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+      
+      // Fetch Created
+      const createdRes = await fetch(`${baseUrl}/arts/creator/${address}`);
+      const createdData = await createdRes.json();
+      
+      // Fetch Owned
+      const ownedRes = await fetch(`${baseUrl}/arts/owner/${address}`);
+      const ownedData = await ownedRes.json();
+
+      setStats({
+        created: createdData.data?.length || 0,
+        owned: ownedData.data?.length || 0,
+        bought: 0, // Mock for now until activity endpoint is ready
+        uploaded: createdData.data?.length || 0,
+        totalEarnings: (createdData.data || []).reduce((acc: number, art: any) => {
+          const val = parseFloat(art.minPrice) || 0;
+          // If value is huge (>= 1,000,000), it's likely Stroops (10^7 = 1 XLM)
+          return acc + (val >= 1000000 ? val / 10000000 : val);
+        }, 0)
+      });
+    } catch (err) {
+      console.error("Error fetching stats:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Mock chart data
   const chartData = [30, 45, 35, 60, 55, 80, 75]
@@ -65,110 +85,128 @@ export default function Overview() {
     return `${x},${y}`
   }).join(' ')
 
-  const cards = [
-    { label: 'Total Created', value: stats.totalCreated, icon: Palette, color: 'text-primary' },
-    { label: 'Total Sold', value: stats.totalSold, icon: ShoppingCart, color: 'text-secondary' },
-    { label: 'Total Gained', value: `${stats.totalGained} XLM`, icon: DollarSign, color: 'text-green-400' },
-    { label: 'Currently Listed', value: stats.listedItems, icon: Clock, color: 'text-orange-400' },
-  ]
-
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {cards.map((card, i) => (
-          <motion.div
-            key={card.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-            className="bg-surface/30 backdrop-blur-xl p-8 rounded-[32px] border border-surface/50 shadow-xl hover:shadow-2xl hover:shadow-primary/5 transition-all group"
-          >
-            <div className={`w-12 h-12 rounded-2xl bg-surface/50 border border-surface/50 flex items-center justify-center mb-6 transition-transform group-hover:scale-110`}>
-              <card.icon className={card.color} size={24} />
-            </div>
-            <p className="text-foreground/50 font-bold mb-1">{card.label}</p>
-            <h3 className="text-3xl font-black">{card.value}</h3>
-          </motion.div>
-        ))}
+    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex justify-between items-end mb-4">
+         <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+        >
+          <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-2">Welcome back, {username}</h2>
+          <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Your creative empire is growing every day</p>
+        </motion.div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+        <StatCard label="Total Earnings" value={`$${stats.totalEarnings.toFixed(2)}`} icon={<DollarSign size={18} className="text-emerald-500" />} trend="+12.5%" />
+        <StatCard label="Uploaded Assets" value={stats.uploaded.toString()} icon={<ImageIcon size={18} className="text-cyan-600" />} />
+        <StatCard label="Items Bought" value={stats.bought.toString()} icon={<Briefcase size={18} className="text-indigo-500" />} />
+        <StatCard label="Items Owned" value={stats.owned.toString()} icon={<User size={18} className="text-amber-500" />} />
+        <StatCard label="Created Now" value={stats.created.toString()} icon={<Plus size={18} className="text-rose-500" />} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Performance Chart */}
-        <div className="lg:col-span-2 bg-surface/30 backdrop-blur-xl p-10 rounded-[40px] border border-surface/50 shadow-xl">
-          <div className="flex items-center justify-between mb-10">
+        {/* Analytics Chart */}
+        <div className="lg:col-span-2 bg-white p-10 rounded-[40px] border border-slate-100 shadow-sm">
+          <div className="flex items-center justify-between mb-12">
             <div>
-              <h3 className="text-2xl font-black mb-2">Earnings Performance</h3>
-              <p className="text-foreground/50 font-medium">Your revenue over the last 7 days</p>
+              <h3 className="text-xl font-black text-slate-900 mb-1">Portfolio Analytics</h3>
+              <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">Growth performance over the last 30 days</p>
             </div>
-            <div className="flex items-center gap-2 text-green-400 font-bold">
-              <TrendingUp size={20} />
-              <span>+12.5%</span>
+            <div className="px-4 py-2 bg-slate-50 rounded-xl border border-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-widest">
+               Last 30 Days
             </div>
           </div>
           
-          <div className="relative h-[240px] w-full group">
-            <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-full overflow-visible drop-shadow-[0_0_15px_rgba(51,255,235,0.2)]">
+          <div className="relative h-[200px] w-full px-2">
+            <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-full overflow-visible">
               <defs>
-                <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#33FFEB" stopOpacity="0.3" />
-                  <stop offset="100%" stopColor="#33FFEB" stopOpacity="0" />
-                </linearGradient>
+                 <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#22D3EE" stopOpacity="0.2" />
+                    <stop offset="100%" stopColor="#22D3EE" stopOpacity="0" />
+                 </linearGradient>
               </defs>
               <path
                 d={`M 0,${chartHeight} L ${points} L ${chartWidth},${chartHeight} Z`}
                 fill="url(#chartGradient)"
-                className="transition-all duration-1000"
               />
               <polyline
                 fill="none"
-                stroke="#33FFEB"
+                stroke="#22D3EE"
                 strokeWidth="4"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 points={points}
-                className="transition-all duration-1000"
               />
-              {chartData.map((val, i) => {
-                const x = (i / (chartData.length - 1)) * chartWidth;
-                const y = chartHeight - (val / maxValue) * chartHeight;
-                return (
-                  <circle
-                    key={i}
-                    cx={x}
-                    cy={y}
-                    r="4"
-                    fill="#0D1117"
-                    stroke="#33FFEB"
-                    strokeWidth="3"
-                    className="hover:r-6 transition-all cursor-pointer"
-                  />
-                );
-              })}
             </svg>
+            <div className="flex justify-between mt-8 border-t border-slate-50 pt-6">
+               {['WEEK 1', 'WEEK 2', 'WEEK 3', 'WEEK 4'].map(w => (
+                  <span key={w} className="text-[9px] font-black text-slate-300 tracking-widest">{w}</span>
+               ))}
+            </div>
           </div>
         </div>
 
-        {/* Recent Transactions List */}
-        <div className="bg-surface/30 backdrop-blur-xl p-10 rounded-[40px] border border-surface/50 shadow-xl">
-          <h3 className="text-2xl font-black mb-8">Recent Sales</h3>
-          <div className="space-y-6">
-            {[1, 2, 3, 4].map((_, i) => (
-              <div key={i} className="flex items-center gap-4 group cursor-pointer hover:translate-x-1 transition-transform">
-                <div className="w-12 h-12 rounded-xl bg-surface/50 border border-surface overflow-hidden">
-                  <img src="/file.svg" className="w-full h-full object-cover p-2 opacity-50" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-bold group-hover:text-primary transition-colors text-sm">Neon Rift #{i+1}</h4>
-                  <p className="text-xs text-foreground/40 font-medium">Sold to GCF2A...3X9Y</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold text-sm">240 XLM</p>
-                  <p className="text-[10px] text-foreground/30">2h ago</p>
-                </div>
-              </div>
-            ))}
+        {/* Quick Actions */}
+        <div className="bg-[#0F172A] p-10 rounded-[40px] shadow-2xl relative overflow-hidden flex flex-col">
+          <h3 className="text-xl font-black text-white mb-8 relative z-10">Asset Insights</h3>
+          <div className="space-y-6 flex-1 relative z-10">
+             <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
+                <p className="text-[9px] font-black text-cyan-400 uppercase tracking-widest mb-1">Top Selling Category</p>
+                <p className="text-sm font-black text-white">Digital Fine Art</p>
+             </div>
+             <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
+                <p className="text-[9px] font-black text-cyan-400 uppercase tracking-widest mb-1">Market Engagement</p>
+                <p className="text-sm font-black text-white">+24.5% Higher</p>
+             </div>
+             <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
+                <p className="text-[9px] font-black text-cyan-400 uppercase tracking-widest mb-1">Platform Rank</p>
+                <p className="text-sm font-black text-white">#12 Creator</p>
+             </div>
           </div>
+          <Link href="/dashboard/upload" className="mt-8 py-4 bg-cyan-400 text-slate-900 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl text-center hover:bg-cyan-500 transition-all">
+             Mint New Asset
+          </Link>
+          <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-cyan-400/10 blur-[80px] rounded-full" />
         </div>
+      </div>
+
+      {/* Recent History */}
+      <div className="bg-white rounded-[40px] border border-slate-100 shadow-sm overflow-hidden mb-12 uppercase tracking-tight">
+         <div className="p-8 border-b border-slate-50 flex justify-between items-center">
+            <h3 className="text-xl font-black text-slate-900 tracking-tight">Recent Activity</h3>
+            <button className="text-[10px] font-black text-slate-300 uppercase tracking-widest hover:text-slate-900">View History</button>
+         </div>
+         <table className="w-full text-left">
+            <thead>
+               <tr className="bg-slate-50/50">
+                  <th className="px-8 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400">Action</th>
+                  <th className="px-8 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400">Asset</th>
+                  <th className="px-8 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400">Price</th>
+                  <th className="px-8 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Date</th>
+               </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+               {[
+                  { action: 'Listed', name: 'Prism Core v1', price: '4.50 ETH', date: '2 Hours Ago' },
+                  { action: 'Bought', name: 'Desert Solitude', price: '2.15 ETH', date: '1 Day Ago' },
+                  { action: 'Minted', name: 'Golden Ratio', price: '-', date: '3 Days Ago' },
+               ].map((sale, i) => (
+                  <tr key={i} className="hover:bg-slate-50/30 transition-colors">
+                     <td className="px-8 py-6">
+                        <span className={`px-3 py-1 bg-slate-50 border border-slate-100 rounded-lg text-[9px] font-black text-slate-400 uppercase tracking-widest`}>
+                           {sale.action}
+                        </span>
+                     </td>
+                     <td className="px-8 py-6">
+                        <span className="text-sm font-black text-slate-900">{sale.name}</span>
+                     </td>
+                     <td className="px-8 py-6 font-black text-slate-900 text-sm">{sale.price}</td>
+                     <td className="px-8 py-6 text-right text-xs font-black text-slate-400 uppercase tracking-widest">{sale.date}</td>
+                  </tr>
+               ))}
+            </tbody>
+         </table>
       </div>
     </div>
   )

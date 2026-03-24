@@ -1,146 +1,122 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { User, Lock, Wallet, ArrowRight } from 'lucide-react';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
-    identifier: '',
-    password: '',
+    username: '',
+    password: ''
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  const handleWalletConnect = async () => {
+    try {
+      const { isConnected, requestAccess, getAddress } = await import("@stellar/freighter-api");
+      
+      const connectedStatus = await isConnected();
+      if (!connectedStatus.isConnected) {
+        alert("Freighter not installed!");
+        return;
+      }
+
+      await requestAccess();
+      const { address } = await getAddress();
+      
+      if (address) {
+        // Verify user on backend
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/${address}`);
+        const data = await response.json();
+
+        if (response.ok && data.status === 'ok') {
+          localStorage.setItem('zeb_user_address', address);
+          localStorage.setItem('zeb_username', data.data.username);
+          router.push('/dashboard');
+        } else {
+          alert("Account not found. Please sign up first.");
+          router.push('/signup');
+        }
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      alert("Failed to connect wallet.");
+    }
   };
 
-  const router = useRouter();
-  
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock login success - redirect to dashboard
+    // For now, redirect to dashboard as mock login
+    // If we have a backend login endpoint /users/login, we'd call it here
     router.push('/dashboard');
   };
 
   return (
-    <main className="relative min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-background via-surface/30 to-background overflow-hidden">
-      <style jsx>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-20px); }
-        }
-        @keyframes pulse-glow {
-          0%, 100% { opacity: 0.6; filter: drop-shadow(0 0 20px #33FFEB40); }
-          50% { opacity: 1; filter: drop-shadow(0 0 40px #33FFEB80); }
-        }
-        @keyframes rotate {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        .node { animation: pulse-glow 2s infinite; }
-        .orbit { animation: rotate 20s linear infinite; }
-        .orbit2 { animation: rotate 15s linear reverse infinite; }
-        .float { animation: float 6s ease-in-out infinite; }
-        .glow {
-          filter: drop-shadow(0 0 10px rgba(51, 255, 235, 0.8));
-        }
-      `}</style>
+    <main className="min-h-screen bg-slate-50 flex items-center justify-center p-6 relative overflow-hidden">
+      {/* Background blobs */}
+      <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-cyan-100/30 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2" />
+      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-slate-200/30 blur-[100px] rounded-full translate-y-1/2 -translate-x-1/2" />
 
-      {/* Left Animation - Hidden on mobile */}
-      <div className="hidden md:flex w-full md:w-1/2 items-center justify-center bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/10 p-16 relative overflow-hidden">
-        <div className="float relative w-[400px] h-[400px]">
-          <svg viewBox="0 0 400 400" className="w-full h-full opacity-80">
-            {/* Orbits */}
-            <circle cx="200" cy="200" r="140" stroke="url(#orbit1)" strokeWidth="1.5" fill="none" className="orbit opacity-60"/>
-            <circle cx="200" cy="200" r="100" stroke="url(#orbit2)" strokeWidth="1.5" fill="none" className="orbit2 opacity-60"/>
-            <circle cx="200" cy="200" r="160" stroke="url(#orbit1)" strokeWidth="0.5" fill="none" className="orbit" style={{animationDuration: '25s'}} opacity="0.4"/>
-            {/* Nodes */}
-            <g className="node glow"><circle cx="200" cy="60" r="14" fill="#33FFEB"/></g>
-            <g className="node glow" style={{animationDelay: '0.7s'}}><circle cx="340" cy="200" r="14" fill="#DA4167"/></g>
-            <g className="node glow" style={{animationDelay: '1.4s'}}><circle cx="200" cy="340" r="14" fill="#33FFEB"/></g>
-            <g className="node glow" style={{animationDelay: '2.1s'}}><circle cx="60" cy="200" r="12" fill="#DA4167"/></g>
-            {/* Gradiants */}
-            <defs>
-              <linearGradient id="orbit1" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#33FFEB20"/>
-                <stop offset="50%" stopColor="#33FFEB40"/>
-                <stop offset="100%" stopColor="#DA416740"/>
-              </linearGradient>
-              <linearGradient id="orbit2" x1="100%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#DA416740"/>
-                <stop offset="50%" stopColor="#33FFEB40"/>
-                <stop offset="100%" stopColor="#33FFEB20"/>
-              </linearGradient>
-            </defs>
-          </svg>
+      <div className="w-full max-w-[480px] relative z-10">
+        <div className="text-center mb-10">
+           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4">The Digital Atelier</p>
+           <h1 className="text-5xl font-black text-slate-900 tracking-tight mb-4">Welcome back</h1>
+           <p className="text-sm font-bold text-slate-400">Access your curated digital collection.</p>
         </div>
-        <div className="absolute text-5xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent drop-shadow-glow top-1/4 left-1/4">
-          Zeb
-        </div>
-        <div className="absolute text-2xl text-foreground/70 font-semibold bottom-1/4 left-1/4 max-w-xs">
-          Decentralized Asset Registry & Marketplace
-        </div>
-      </div>
 
-      {/* Right Form */}
-      <div className="w-full md:w-1/2 flex flex-col items-center justify-center p-8 md:p-12 lg:p-20 bg-background/50 backdrop-blur-sm">
-        <div className="w-full max-w-md space-y-8 bg-surface/95 backdrop-blur-xl border border-border/30 rounded-3xl p-12 shadow-2xl ring-1 ring-primary/20">
-          <div className="text-center">
-            <h1 className="text-5xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-primary via-foreground to-secondary bg-clip-text text-transparent mb-4 tracking-tight">
-              Welcome Back
-            </h1>
-            <p className="text-xl text-foreground/60 max-w-sm mx-auto leading-relaxed">
-              Sign in to access your Zeb dashboard and marketplace.
-            </p>
-          </div>
+        <div className="bg-white rounded-[40px] border border-slate-100 shadow-2xl shadow-slate-200/50 p-12">
+          <form className="space-y-6" onSubmit={handleLogin}>
+              <div>
+                <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Username</label>
+                <input 
+                  type="text" 
+                  className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500/20 text-slate-900 font-medium"
+                  placeholder="Enter your username"
+                  value={formData.username}
+                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Password</label>
+                <input 
+                  type="password" 
+                  className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500/20 text-slate-900 font-medium"
+                  placeholder="••••••••"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                />
+              </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label htmlFor="identifier" className="block text-sm font-semibold text-foreground tracking-wide">
-                Username              </label>
-              <input
-                id="identifier"
-                name="identifier"
-                type="text"
-                value={formData.identifier}
-                onChange={handleChange}
-                className="w-full px-5 py-4 bg-surface/60 hover:bg-surface/70 border border-border/40 hover:border-primary/50 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/30 focus:border-primary transition-all duration-300 text-foreground placeholder:text-foreground/40 text-lg shadow-sm hover:shadow-md"
-                placeholder="username"
-                required
-              />
+              <button 
+                type="submit"
+                className="w-full py-5 bg-cyan-400 text-slate-900 font-black rounded-xl hover:bg-cyan-300 transition-all shadow-lg shadow-cyan-400/20 uppercase tracking-widest text-xs"
+              >
+                Sign In
+              </button>
+            </form>
+
+            <div className="relative my-8">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-100"></div>
+              </div>
+              <div className="relative flex justify-center text-xs uppercase font-black tracking-widest">
+                <span className="px-4 bg-white text-slate-300">Or continue with</span>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <label htmlFor="password" className="block text-sm font-semibold text-foreground tracking-wide">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleChange}
-                className="w-full px-5 py-4 bg-surface/60 hover:bg-surface/70 border border-border/40 hover:border-primary/50 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/30 focus:border-primary transition-all duration-300 text-foreground placeholder:text-foreground/40 text-lg shadow-sm hover:shadow-md"
-                placeholder="••••••••"
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 active:scale-95 text-background font-bold py-5 px-8 rounded-2xl transition-all duration-300 shadow-xl hover:shadow-2xl ring-2 ring-primary/30 hover:ring-primary/50 text-lg tracking-wide transform"
+            <button 
+              onClick={handleWalletConnect}
+              className="w-full py-5 bg-slate-50 border border-slate-100 text-slate-900 font-black rounded-xl hover:bg-slate-100 transition-all flex items-center justify-center gap-3 uppercase tracking-widest text-xs"
             >
-              Sign In to Zeb
+              <Wallet size={18} className="text-cyan-500" />
+              Connect Wallet
             </button>
-          </form>
 
-          <div className="text-center pt-8 border-t border-border/30">
-            <p className="text-sm text-foreground/50 mb-4">
-              Don't have an account yet, <Link href="/signup" className="text-primary hover:text-primary/80 font-semibold underline">signup</Link>?
-            </p>
+          <div className="mt-10 text-center">
+             <p className="text-xs font-bold text-slate-400">
+                New to the Atelier? <Link href="/signup" className="text-cyan-500 hover:text-cyan-600 transition-colors">Sign Up</Link>
+             </p>
           </div>
         </div>
       </div>

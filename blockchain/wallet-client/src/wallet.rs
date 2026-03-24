@@ -49,12 +49,6 @@ impl WalletClient{
         // 1. Serialize transaction to XDR or bytes
         let tx_bytes = encode_address(tx);
 
-        // 2. Call provider API (frontend bridge)
-        // Example for Freighter (JS):
-        // window.freighterApi.signTransaction(tx_bytes)
-        // returns signed_tx_bytes
-
-        // 3. Convert bytes back to SignedTransaction
         let signed_tx = deserialize_signed_tx(&tx_bytes_signed);
 
         Ok(signed_tx)
