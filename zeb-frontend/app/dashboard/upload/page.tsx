@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { registerArtworkOnChain, listForSaleOnChain } from '@/lib/stellar';
 import Navbar from '../../../components/layout/Navbar'
 import Footer from '../../../components/layout/Footer'
+import Swal from "sweetalert2";
 
 export default function UploadPage() {
   const router = useRouter();
@@ -45,18 +46,15 @@ export default function UploadPage() {
   }
 
   const handleUpload = async () => {
-    if (!file) {
-      alert("Please select a file first");
-      return;
-    }
-
+   if (!file) {
+    Swal.fire('No File', 'Please select a file first.', 'warning');
+    return;   }
     const address = localStorage.getItem('zeb_user_address');
     if (!address) {
-      alert("Please connect your wallet first");
+      Swal.fire('Wallet Required', 'Please connect your wallet first.', 'warning');
       router.push('/login');
       return;
     }
-
     setLoading(true);
     setUploadStatus('uploading');
 
@@ -104,7 +102,7 @@ export default function UploadPage() {
         errorMsg = "Your Stellar account is not funded on Testnet. Please visit https://laboratory.stellar.org/#account-creator to fund it via Friendbot before registering.";
       }
       
-      alert(errorMsg);
+      Swal.fire('Upload Failed', errorMsg, 'error');
       setUploadStatus('idle');
     } finally {
       setLoading(false);
