@@ -9,14 +9,14 @@ interface Transaction {
   id: number
   nftTitle: string
   nftImg: string
-  type: 'purchase' | 'sale' | 'bid' | 'listing'
+  type: 'purchase' | 'sale' | 'bid' | 'listing' | 'all'
   amount: string
   date: string
   status: 'completed' | 'pending' | 'failed'
   counterparty: string
 }
 
-type SubTabType = 'all' | 'purchases' | 'sales' | 'bids'
+type SubTabType = 'purchase' | 'sale' | 'bid' | 'listing' | 'all'
 
 const rawTransactions: Transaction[] = [
   { id: 1, nftTitle: 'Cosmic Rift by NovaCollect', nftImg: '/file.svg', type: 'purchase', amount: '450 XLM', date: '2h ago', status: 'completed', counterparty: 'NovaC...K7P2' },
@@ -24,7 +24,7 @@ const rawTransactions: Transaction[] = [
   { id: 3, nftTitle: 'Aurora Code Rain', nftImg: '/file.svg', type: 'bid', amount: '320 XLM', date: '3h ago', status: 'pending', counterparty: 'CodeR...H8J5' },
   { id: 4, nftTitle: 'Pixel Nebula Drift', nftImg: '/file.svg', type: 'purchase', amount: '560 XLM', date: '5h ago', status: 'completed', counterparty: 'PixelN...2L6R' },
   { id: 5, nftTitle: 'Synthwave Horizon', nftImg: '/file.svg', type: 'sale', amount: '420 XLM', date: '1d ago', status: 'completed', counterparty: 'Synth...9F3V' },
-  { id: 6, nftTitle: 'Glitch Archive #12', nftImg: '/file.svg', type: 'bid', amount: '290 XLM', date: '6h ago', status: 'outbid', counterparty: 'Glitch...M5T1' },
+  { id: 6, nftTitle: 'Glitch Archive #12', nftImg: '/file.svg', type: 'bid', amount: '290 XLM', date: '6h ago', status: 'completed', counterparty: 'Glitch...M5T1' },
 ]
 
 export default function ActivitiesTab() {
@@ -76,9 +76,9 @@ export default function ActivitiesTab() {
               All Activity
             </button>
             <button
-              onClick={() => setActiveSubTab('purchases')}
+              onClick={() => setActiveSubTab('purchase')}
               className={`flex-1 py-3 px-4 rounded-2xl font-black text-base transition-all duration-500 ${
-                activeSubTab === 'purchases'
+                activeSubTab === 'purchase'
                   ? 'bg-gradient-to-r from-primary to-secondary text-background shadow-[0_10px_30px_rgba(51,255,235,0.4)] scale-[1.02]'
                   : 'text-foreground/60 hover:text-foreground'
               }`}
@@ -86,9 +86,9 @@ export default function ActivitiesTab() {
               Purchases
             </button>
             <button
-              onClick={() => setActiveSubTab('sales')}
+              onClick={() => setActiveSubTab('sale')}
               className={`flex-1 py-3 px-4 rounded-2xl font-black text-base transition-all duration-500 ${
-                activeSubTab === 'sales'
+                activeSubTab === 'sale'
                   ? 'bg-gradient-to-r from-primary to-secondary text-background shadow-[0_10px_30px_rgba(51,255,235,0.4)] scale-[1.02]'
                   : 'text-foreground/60 hover:text-foreground'
               }`}
@@ -96,9 +96,9 @@ export default function ActivitiesTab() {
               Sales
             </button>
             <button
-              onClick={() => setActiveSubTab('bids')}
+              onClick={() => setActiveSubTab('bid')}
               className={`flex-1 py-3 px-4 rounded-2xl font-black text-base transition-all duration-500 ${
-                activeSubTab === 'bids'
+                activeSubTab === 'bid'
                   ? 'bg-gradient-to-r from-primary to-secondary text-background shadow-[0_10px_30px_rgba(51,255,235,0.4)] scale-[1.02]'
                   : 'text-foreground/60 hover:text-foreground'
               }`}

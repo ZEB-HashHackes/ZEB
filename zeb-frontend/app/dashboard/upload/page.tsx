@@ -85,7 +85,8 @@ export default function UploadPage() {
       setUploadStatus('blockchain');
       const hash_onchain = await registerArtworkOnChain(formData.title, hash, address);
       setTxHash(hash_onchain);
-
+      //  wait until it is registered
+      await new Promise(resolve => setTimeout(resolve, 5000));
       // 3. (Optional) Chain Listing if Fixed Price
       if (formData.listingType === 'fixed') {
         await listForSaleOnChain(hash, address, parseFloat(formData.price));

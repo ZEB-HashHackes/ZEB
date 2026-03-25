@@ -9,6 +9,8 @@ interface ArtCardProps {
   price: string;
   timer?: string;
   hash?: string;
+  createdAt?: string;
+  description?:string;
   saleType?: 'sale' | 'bid';
   bidders?: number;
 }
