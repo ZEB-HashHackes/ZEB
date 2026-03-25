@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Swal from 'sweetalert2';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Wallet, User, Lock, ArrowRight, ShieldCheck, Globe } from 'lucide-react';
@@ -35,7 +36,7 @@ export default function SignupPage() {
       if (connectedStatus && connectedStatus.isConnected) {
         const access = await requestAccess();
         if (access && access.error) {
-          alert(`Access denied: ${access.error}`);
+          Swal.fire('Access Denied', `Freighter: ${access.error}`, 'error');
           return;
         }
 
@@ -44,21 +45,21 @@ export default function SignupPage() {
           setPublicKey(publicKeyResult.address);
           setWalletConnected(true);
         } else {
-          alert('Failed to get wallet address.');
+          Swal.fire('Wallet Error', 'Failed to retrieve wallet address.', 'warning');
         }
       } else {
-        alert('Freighter wallet not found or not connected. Please install the extension.');
+        Swal.fire('Freighter Missing', 'Freighter wallet not found or not connected. Please install the extension.', 'warning');
       }
     } catch (error) {
       console.error('Wallet connection error:', error);
-      alert('Error connecting to Freighter wallet.');
+      Swal.fire('Connection Error', 'Error connecting to Freighter wallet.', 'error');
     }
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!publicKey) {
-      alert('Please connect your wallet first!');
+      Swal.fire('Wallet Required', 'Please connect your wallet first!', 'warning');
       return;
     }
 
@@ -83,14 +84,10 @@ export default function SignupPage() {
         localStorage.setItem('zeb_user_address', publicKey);
         localStorage.setItem('zeb_username', formData.username);
         
-        alert('Signup successful! Redirecting to dashboard...');
+        Swal.fire('Success!', 'Signup successful! Redirecting to dashboard...', 'success');
         router.push('/dashboard');
       } else {
-        alert(`Signup failed: ${data.message || 'Unknown error'}`);
-      }
-    } catch (error) {
-      console.error('Signup error:', error);
-      alert('Error during signup. Please try again.');
+        Swal.fire('Signup Failed', `${data.message || 'Unknown error'}`, 'error');\n      }\n    } catch (error) {\n      console.error('Signup error:', error);\n      Swal.fire('Signup Error', 'Error during signup. Please try again.', 'error');
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useRef } from 'react'
+import Swal from 'sweetalert2'
 import Image from 'next/image'
 import { X, UploadCloud, Image as ImageIcon, Type, BookOpen, Music, Video, Tag, DollarSign, Clock } from 'lucide-react'
 
@@ -77,7 +78,7 @@ export default function ArtUploadModal({ isOpen, onClose, onUpload }: ArtUploadM
       
       const connected = await isConnected();
       if (!connected.isConnected) {
-        alert("Please connect your Freighter wallet first.");
+        Swal.fire('Wallet Required', 'Please connect your Freighter wallet first.', 'warning');
         setIsUploading(false);
         return;
       }

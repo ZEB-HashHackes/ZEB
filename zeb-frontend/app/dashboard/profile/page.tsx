@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react"
 import Image from "next/image"
 import { User, Wallet, Camera, Edit, Check, X, Upload, ShieldCheck, Gavel, TrendingUp, BarChart3 } from "lucide-react"
 import ProfileHeader from "../../../components/dashboard/ProfileHeader"
+import Swal from "sweetalert2"
 
 interface UserProfile {
   avatar: string
@@ -47,12 +48,11 @@ export default function ProfilePage() {
   }
 
   const handleSave = async () => {
-    if (!validateWallet(tempProfile.wallet)) {
-      alert("Invalid Stellar wallet address")
-      return
-    }
-
-    setIsSaving(true)
+  if (!validateWallet(tempProfile.wallet)) {
+    Swal.fire('Invalid Wallet', 'Invalid Stellar wallet address', 'warning')
+    return
+     }
+     setIsSaving(true)
     // Simulate save
     setTimeout(() => {
       setProfile(tempProfile)

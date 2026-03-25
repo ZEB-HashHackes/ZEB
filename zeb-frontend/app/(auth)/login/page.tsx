@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Swal from 'sweetalert2';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { User, Lock, Wallet, ArrowRight } from 'lucide-react';
@@ -18,7 +19,7 @@ export default function LoginPage() {
       
       const connectedStatus = await isConnected();
       if (!connectedStatus.isConnected) {
-        alert("Freighter not installed!");
+        Swal.fire('Freighter Missing', 'Please install the Freighter wallet extension.', 'warning');
         return;
       }
 
@@ -35,13 +36,13 @@ export default function LoginPage() {
           localStorage.setItem('zeb_username', data.data.username);
           router.push('/dashboard');
         } else {
-          alert("Account not found. Please sign up first.");
+          Swal.fire('Account Not Found', 'Please sign up first to access the dashboard.', 'warning');
           router.push('/signup');
         }
       }
     } catch (err) {
       console.error("Login error:", err);
-      alert("Failed to connect wallet.");
+      Swal.fire('Connection Failed', 'Failed to connect wallet. Please try again.', 'error');
     }
   };
 
