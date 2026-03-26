@@ -6,7 +6,7 @@ import { Clock, ShieldCheck, ShoppingBag, TrendingUp } from 'lucide-react'
 
 export type Status = 'auction' | 'direct' | 'not_listed' | 'AUCTION' | 'FIXED_PRICE' | 'NOT_LISTED'
 
-interface NFTCardProps {
+export interface NFTCardProps {
   id: string
   title: string
   image: string

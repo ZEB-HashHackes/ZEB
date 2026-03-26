@@ -195,15 +195,19 @@ pub fn place_bid(
     amount: u128,
     timestamp: u128,
 ) -> Result<(), ZebError> {
-
     bidder.require_auth();
 
-    if amount <= 0 {
+    if amount == 0 {
         return Err(ZebError::InvalidOffer);
     }
 
-    let mut auctions = auctions_map(&e);
+    let fee_token = crate::storage::get_fee_token(&e);
+    let fee_amount = crate::storage::get_fee_amount(&e);
+    let zeb_receiver = crate::storage::get_zeb_receiver(&e);
 
+    let token = soroban_sdk::token::Client::new(&e, &fee_token);
+
+    let mut auctions = auctions_map(&e);
     let mut auction = auctions
         .get(hash.clone())
         .ok_or(ZebError::InvalidAuction)?;
@@ -216,6 +220,20 @@ pub fn place_bid(
         return Err(ZebError::InvalidOffer);
     }
 
+    // Transfer bid amount from bidder → seller (escrow via seller)
+    token.transfer(&bidder, &auction.seller, &(amount as i128));
+
+    // Collect service fees
+    if fee_amount > 0 {
+        token.transfer(&bidder, &zeb_receiver, &(fee_amount as i128));
+        token.transfer(&auction.seller, &zeb_receiver, &(fee_amount as i128));
+    }
+
+    // Refund previous highest bidder
+    if let Some(prev_bidder) = auction.highest_bidder.clone() {
+        token.transfer(&auction.seller, &prev_bidder, &(auction.highest_bid as i128));
+    }
+
     auction.highest_bid = amount;
     auction.highest_bidder = Some(bidder.clone());
 
@@ -226,6 +244,45 @@ pub fn place_bid(
 
     Ok(())
 }
+
+// pub fn place_bid(
+//     e: Env,
+//     hash: BytesN<32>,
+//     bidder: Address,
+//     amount: u128,
+//     timestamp: u128,
+// ) -> Result<(), ZebError> {
+//
+//     bidder.require_auth();
+//
+//     if amount <= 0 {
+//         return Err(ZebError::InvalidOffer);
+//     }
+//
+//     let mut auctions = auctions_map(&e);
+//
+//     let mut auction = auctions
+//         .get(hash.clone())
+//         .ok_or(ZebError::InvalidAuction)?;
+//
+//     if timestamp < auction.start_time || timestamp > auction.end_time {
+//         return Err(ZebError::InvalidAuction);
+//     }
+//
+//     if amount <= auction.highest_bid {
+//         return Err(ZebError::InvalidOffer);
+//     }
+//
+//     auction.highest_bid = amount;
+//     auction.highest_bidder = Some(bidder.clone());
+//
+//     auctions.set(hash.clone(), auction);
+//     save_auction(&e, &auctions);
+//
+//     events::auction_bid(&e, hash, bidder, amount);
+//
+//     Ok(())
+// }
 
 
 pub fn close_auction(
@@ -333,6 +390,7 @@ pub fn cancel_listing(
     Ok(())
 }
 
+
 pub fn buy_now(
     e: Env,
     hash: BytesN<32>,
@@ -340,11 +398,34 @@ pub fn buy_now(
 ) -> Result<(), ZebError> {
     buyer.require_auth();
 
-    let mut listings = listings_map(&e);
-    let listing = listings.get(hash.clone()).ok_or(ZebError::ListingNotFound)?;
+    let fee_token = crate::storage::get_fee_token(&e);
+    let fee_amount = crate::storage::get_fee_amount(&e);
+    let zeb_receiver = crate::storage::get_zeb_receiver(&e);
 
+    let token = soroban_sdk::token::Client::new(&e, &fee_token);
+
+    let mut listings = listings_map(&e);
+    let listing = listings
+        .get(hash.clone())
+        .ok_or(ZebError::ListingNotFound)?;
+
+    let seller = listing.seller.clone();
+    let price = listing.price;
+
+    // Transfer price from buyer → seller
+    token.transfer(&buyer, &seller, &(price as i128));
+
+    // Service fee from buyer
+    if fee_amount > 0 {
+        token.transfer(&buyer, &zeb_receiver, &(fee_amount as i128));
+        token.transfer(&seller, &zeb_receiver, &(fee_amount as i128));
+    }
+
+    // Transfer ownership
     let mut artworks = artworks_map(&e);
-    let mut art = artworks.get(hash.clone()).ok_or(ZebError::ArtworkNotFound)?;
+    let mut art = artworks
+        .get(hash.clone())
+        .ok_or(ZebError::ArtworkNotFound)?;
 
     art.current_owner = buyer.clone();
     artworks.set(hash.clone(), art);
@@ -353,10 +434,35 @@ pub fn buy_now(
     listings.remove(hash.clone());
     save_listing(&e, &listings);
 
-    events::artwork_bought(&e, hash, buyer, listing.price);
+    events::artwork_bought(&e, hash, buyer, price);
 
     Ok(())
 }
+
+// pub fn buy_now(
+//     e: Env,
+//     hash: BytesN<32>,
+//     buyer: Address,
+// ) -> Result<(), ZebError> {
+//     buyer.require_auth();
+//
+//     let mut listings = listings_map(&e);
+//     let listing = listings.get(hash.clone()).ok_or(ZebError::ListingNotFound)?;
+//
+//     let mut artworks = artworks_map(&e);
+//     let mut art = artworks.get(hash.clone()).ok_or(ZebError::ArtworkNotFound)?;
+//
+//     art.current_owner = buyer.clone();
+//     artworks.set(hash.clone(), art);
+//     save_artwork(&e, &artworks);
+//
+//     listings.remove(hash.clone());
+//     save_listing(&e, &listings);
+//
+//     events::artwork_bought(&e, hash, buyer, listing.price);
+//
+//     Ok(())
+// }
 
 pub fn get_listings(
     e: Env,

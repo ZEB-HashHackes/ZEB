@@ -123,7 +123,7 @@ export default function ArtUploadModal({ isOpen, onClose, onUpload }: ArtUploadM
       
       const RPC_URL = "https://soroban-testnet.stellar.org";
       const NETWORK_PASSPHRASE = Networks.TESTNET;
-      const CONTRACT_ID = "CAG3L7MRMVAIITRM7JVJ2G3KE6C6WYS3MVAIGXV3DXKMR7UA667J7LBQ";
+      const CONTRACT_ID = "CADX4ROQ7XXRDRSEVIFCCEW3U52WDUGN4QIPT6YHFY2OXR3WNBKTGQXO";
 
       const server = new rpc.Server(RPC_URL);
       const contract = new Contract(CONTRACT_ID);
@@ -174,7 +174,9 @@ export default function ArtUploadModal({ isOpen, onClose, onUpload }: ArtUploadM
 
       const signedTx = TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE);
       const sendResult = await server.sendTransaction(signedTx);
-      
+        
+      alert(`Artwork successfully registered!\nBackend Hash: ${hash}\nBlockchain TX: ${sendResult.hash}`);
+
       onUpload({ 
         ...formData, 
         img: preview, 
@@ -182,7 +184,6 @@ export default function ArtUploadModal({ isOpen, onClose, onUpload }: ArtUploadM
         listingType: listingOptions.listingType 
       });
       
-      alert(`Artwork successfully registered!\nBackend Hash: ${hash}\nBlockchain TX: ${sendResult.hash}`);
       onClose();
 
       // Reset form
