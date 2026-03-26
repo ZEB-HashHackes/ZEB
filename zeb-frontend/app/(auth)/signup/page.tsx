@@ -87,7 +87,11 @@ export default function SignupPage() {
         Swal.fire('Success!', 'Signup successful! Redirecting to dashboard...', 'success');
         router.push('/dashboard');
       } else {
-        Swal.fire('Signup Failed', `${data.message || 'Unknown error'}`, 'error');\n      }\n    } catch (error) {\n      console.error('Signup error:', error);\n      Swal.fire('Signup Error', 'Error during signup. Please try again.', 'error');
+        Swal.fire('Signup Failed', `${data.message || 'Unknown error'}`, 'error');
+            }
+          } catch (error) {
+                console.error('Signup error:', error);
+                Swal.fire('Signup Error', 'Error during signup. Please try again.', 'error');
     } finally {
       setLoading(false);
     }
