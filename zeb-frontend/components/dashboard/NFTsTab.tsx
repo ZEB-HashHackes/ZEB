@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useMemo } from 'react'
-import Link from 'next/link'
+import { UploadArtModalTrigger } from './UploadArtModalTrigger'
 import { Search, Filter, BookOpen, Music, Palette, UploadCloud } from 'lucide-react'
 import NFTCard from './NFTCard'
 import NFTDetailModal from './NFTDetailModal'
@@ -58,49 +58,22 @@ export default function NFTsTab() {
   const [isLoading, setIsLoading] = useState(true)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
 
+  const creatorArts = useDashboardArts('creator');
+  const ownedArts = useDashboardArts('owner');
+
   React.useEffect(() => {
-    const fetchNFTs = async () => {
-      setIsLoading(true);
-      try {
-        const { getAddress } = await import('@stellar/freighter-api');
-        const { address } = await getAddress();
-        
-        const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://zeb-1.onrender.com/api';
-        let endpoint = `${baseUrl}/arts`;
-        if (activeTab === 'owned') {
-          endpoint = `${baseUrl}/arts/owner/${address}`;
-        } else if (activeTab === 'created') {
-          endpoint = `${baseUrl}/arts/creator/${address}`;
-        }
+    if (creatorArts.data || ownedArts.data) {
+      setIsLoading(false);
+    }
+  }, [creatorArts.data, ownedArts.data]);
 
-        const response = await fetch(endpoint);
-        const result = await response.json();
-        
-        if (result.status === 'ok') {
-          const mappedNFTs = result.data.map((item: any) => ({
-            id: item._id,
-            title: item.title,
-            description: item.description,
-            creator: item.creatorBy,
-            owner: item.ownedBy,
-            price: `${item.minPrice} XLM`,
-            img: item.filePath.includes('uploads/') 
-              ? `${baseUrl.replace('/api', '')}/${item.filePath}` 
-              : item.filePath,
-            type: item.category === 'image' ? 'digital art' : item.category,
-            genre: 'other',
-          }));
-          setNfts(mappedNFTs);
-        }
-      } catch (error) {
-        console.error('Error fetching NFTs:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const getCurrentNfts = () => {
+    if (activeTab === 'owned') return ownedArts.data?.data || [];
+    if (activeTab === 'created') return creatorArts.data?.data || [];
+    return []; // listings TODO
+  };
 
-    fetchNFTs();
-  }, [activeTab, refreshTrigger]);
+  const nfts = getCurrentNfts();
 
   const filteredNFTs = useMemo(() => {
     return nfts.filter((nft) => {
@@ -209,10 +182,7 @@ export default function NFTsTab() {
                 </select>
               )}
             </div>
-            <Link href="/dashboard/upload" className="flex items-center gap-2 px-4 py-1 bg-gradient-to-r from-primary to-secondary text-background font-bold rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all whitespace-nowrap">
-              <UploadCloud size={16} />
-              Upload New
-            </Link>
+            <UploadArtModalTrigger />
           </div>
 
           {/* Grid */}

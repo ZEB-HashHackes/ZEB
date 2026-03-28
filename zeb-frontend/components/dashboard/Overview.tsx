@@ -4,6 +4,9 @@ import React, { useState, useEffect } from 'react'
 import {
   User, DollarSign, Image as ImageIcon, Briefcase, Activity, Plus
 } from 'lucide-react'
+import { useWallet } from '../../providers/WalletProvider'
+import { useDashboardArts } from '../../hooks/useDashboardArts'
+import { UploadArtModalTrigger } from './UploadArtModalTrigger'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 
@@ -21,27 +24,23 @@ const StatCard = ({ label, value, icon, trend }: { label: string; value: string;
 );
 
 export default function Overview() {
-  const [stats, setStats] = React.useState({
-    owned: 0,
-    bought: 0,
-    totalEarnings: 0
-  });
-  const [username, setUsername] = React.useState('Arthemus');
-  const [loading, setLoading] = React.useState(true);
+  const creatorArtsQuery = useDashboardArts('creator');
+  const ownerArtsQuery = useDashboardArts('owner');
+  const { wallet } = useWallet();
+  const [username, setUsername] = useState('Creator');
+
+  const stats = {
+    owned: ownerArtsQuery.data?.data.length || 0,
+    bought: 0, // TODO: from activities
+    totalEarnings: 0, // TODO: from activities
+  };
 
   React.useEffect(() => {
-    const address = localStorage.getItem('zeb_user_address');
-    const storedUsername = localStorage.getItem('zeb_username');
-    if (storedUsername) setUsername(storedUsername);
-
-    // Mock stats - no upload fetches
-    setStats({
-      owned: 0,
-      bought: 0,
-      totalEarnings: 0
-    });
-    setLoading(false);
-  }, []);
+    if (wallet?.address) {
+      const stored = localStorage.getItem('zeb_username');
+      setUsername(stored || 'Creator');
+    }
+  }, [wallet]);
 
   // Mock chart data
   const chartData = [30, 45, 35, 60, 55, 80, 75]
@@ -62,14 +61,14 @@ export default function Overview() {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
         >
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-2">Welcome back, {username}</h2>
+  <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-2">Welcome back, {username}</h2>
           <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Your creative empire is growing every day</p>
         </motion.div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatCard label="Total Earnings" value={`$${stats.totalEarnings.toFixed(2)}`} icon={<DollarSign size={18} className="text-emerald-500" />} trend="+12.5%" />
-        <StatCard label="Items Bought" value={stats.bought.toString()} icon={<Briefcase size={18} className="text-indigo-500" />} />
+        <StatCard label="Items Created" value={creatorArtsQuery.data?.data.length?.toString() || '0'} icon={<ImageIcon size={18} className="text-purple-500" />} />
         <StatCard label="Items Owned" value={stats.owned.toString()} icon={<User size={18} className="text-amber-500" />} />
       </div>
 
@@ -132,9 +131,7 @@ export default function Overview() {
                 <p className="text-sm font-black text-white">#12 Creator</p>
              </div>
           </div>
-          <Link href="/dashboard/upload" className="mt-8 py-4 bg-cyan-400 text-slate-900 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl text-center hover:bg-cyan-500 transition-all">
-             Upload New Asset
-          </Link>
+          <UploadArtModalTrigger />
           <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-cyan-400/10 blur-[80px] rounded-full" />
         </div>
       </div>

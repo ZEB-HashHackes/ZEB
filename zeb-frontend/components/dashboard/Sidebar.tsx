@@ -5,7 +5,8 @@ import {
   LayoutDashboard, Palette, Briefcase, 
   ShoppingBag, User, PlusCircle, LogOut 
 } from 'lucide-react'
-import Link from 'next/link'
+import { UploadArtModalTrigger } from './UploadArtModalTrigger';
+import Link from 'next/link';
 
 export type TabType = 'overview' | 'my-works' | 'earnings' | 'settings'
 
@@ -33,13 +34,7 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
          </div>
       </div>
 
-      <Link 
-        href="/dashboard/upload"
-        className="mb-8 flex items-center justify-center gap-2 w-full py-4 bg-slate-900 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-slate-800 transition-all shadow-lg shadow-slate-200"
-      >
-        <PlusCircle size={16} />
-        Create New
-      </Link>
+<UploadArtModalTrigger />
 
       <div className="space-y-3 flex-1">
         {menuItems.map((item) => (
