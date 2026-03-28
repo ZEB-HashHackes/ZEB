@@ -11,6 +11,10 @@ interface UploadFormData {
   description: string;
   category: string;
   minPrice: string;
+  listingType: 'fixed' | 'auction';
+  fixedPrice?: string;
+  startingPrice?: string;
+  auctionEndTime?: string;
   file: File | null;
 }
 
@@ -30,6 +34,10 @@ export function UploadArtModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
     description: '',
     category: 'digital art',
     minPrice: '0',
+    listingType: 'fixed' as const,
+    fixedPrice: '',
+    startingPrice: '',
+    auctionEndTime: '',
     file: null,
   });
   const [preview, setPreview] = useState<string | null>(null);
@@ -63,6 +71,13 @@ export function UploadArtModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
     fd.append('ownedBy', wallet.address);
     fd.append('category', formData.category);
     fd.append('minPrice', formData.minPrice);
+    fd.append('listingType', formData.listingType);
+    if (formData.listingType === 'fixed' && formData.fixedPrice) {
+      fd.append('fixedPrice', formData.fixedPrice);
+    } else if (formData.listingType === 'auction') {
+      if (formData.startingPrice) fd.append('startingPrice', formData.startingPrice);
+      if (formData.auctionEndTime) fd.append('auctionEndTime', formData.auctionEndTime);
+    }
 
     uploadMutation.mutate(fd, {
       onSuccess: () => {
@@ -74,7 +89,17 @@ export function UploadArtModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
   };
 
   const resetForm = () => {
-    setFormData({ title: '', description: '', category: 'digital art', minPrice: '0', file: null });
+    setFormData({ 
+      title: '', 
+      description: '', 
+      category: 'digital art', 
+      minPrice: '0', 
+      listingType: 'fixed' as const,
+      fixedPrice: '',
+      startingPrice: '',
+      auctionEndTime: '',
+      file: null 
+    });
     setPreview(null);
     setProgress(0);
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -162,20 +187,236 @@ export function UploadArtModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
                 ))}
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Min Price (XLM)</label>
-              <div className="relative">
-                <DollarSign size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.minPrice}
-                  onChange={(e) => setFormData(prev => ({ ...prev, minPrice: e.target.value }))}
-                  className="w-full pl-12 p-4 border border-slate-200 rounded-xl focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 focus:outline-none"
-                />
+            {/* Listing Type Radio */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-bold text-slate-700 mb-4">Listing Type *</label>
+              <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-2xl">
+                <label className="flex items-center gap-3 p-4 rounded-xl cursor-pointer hover:bg-white transition-all group">
+                  <input
+                    type="radio"
+                    value="fixed"
+                    checked={formData.listingType === 'fixed'}
+                    onChange={(e) => {
+                      setFormData(prev => ({ ...prev, listingType: 'fixed' as const, startingPrice: '', auctionEndTime: '' }));
+                    }}
+                    className="w-5 h-5 text-cyan-600 focus:ring-cyan-500"
+                  />
+                  <span className="font-semibold text-slate-900 group-hover:text-slate-900">Fixed Price Sale</span>
+                </label>
+                <label className="flex items-center gap-3 p-4 rounded-xl cursor-pointer hover:bg-white transition-all group">
+                  <input
+                    type="radio"
+                    value="auction"
+                    checked={formData.listingType === 'auction'}
+                    onChange={(e) => {
+                      setFormData(prev => ({ ...prev, listingType: 'auction' as const, fixedPrice: undefined }));
+                    }}
+                    className="w-5 h-5 text-cyan-600 focus:ring-cyan-500"
+                  />
+                  <span className="font-semibold text-slate-900 group-hover:text-slate-900">Auction</span>
+                </label>
               </div>
             </div>
+
+            {/* Conditional Price Fields */}
+            <AnimatePresence mode="wait">
+              {formData.listingType === 'fixed' ? (
+                <motion.div
+                  key="fixed"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="md:col-span-1"
+                >
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Fixed Price (XLM) *</label>
+                  <div className="relative">
+                    <DollarSign size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      value={formData.fixedPrice || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, fixedPrice: e.target.value, minPrice: e.target.value }))}
+                      className="w-full pl-12 p-4 border border-slate-200 rounded-xl focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 focus:outline-none"
+                      placeholder="e.g. 100.50"
+                      required
+                    />
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="auction"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="md:col-span-1 md:col-start-2"
+                >
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Starting Price (XLM) *</label>
+                  <div className="relative">
+                    <DollarSign size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.startingPrice || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, startingPrice: e.target.value, minPrice: e.target.value }))}
+                      className="w-full pl-12 p-4 border border-slate-200 rounded-xl focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 focus:outline-none"
+                      placeholder="e.g. 50.00"
+                      required
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+              {formData.listingType === 'auction' && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="md:col-span-1"
+                >
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Auction End Date *</label>
+                  <input
+                    type="date"
+                    value={formData.auctionEndTime ? (() => {
+                      try {
+                        const date = new Date(parseInt(formData.auctionEndTime) * 1000);
+                        return isNaN(date.getTime()) ? '' : date.toISOString().slice(0, 10);
+                      } catch {
+                        return '';
+                      }
+                    })() : ''}
+                    onChange={(e) => {
+                      try {
+                        const date = new Date(e.target.value);
+                        if (!isNaN(date.getTime()) && date > new Date(Date.now() + 60*60*1000)) {
+                          const timestamp = Math.floor(date.getTime() / 1000 + 23*60*60).toString(); // end of day
+                          setFormData(prev => ({ ...prev, auctionEndTime: timestamp }));
+                        }
+                      } catch {
+                        // ignore invalid dates
+                      }
+                    }}
+                    className="w-full p-4 border border-slate-200 rounded-xl focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 focus:outline-none"
+                    required
+                    min={new Date(Date.now() + 60*60*1000).toISOString().slice(0, 10)}
+                  />
+                  <div className="grid grid-cols-3 gap-3 mt-3">
+                    <input
+                      type="number"
+                      min="1"
+                      max="12"
+                      placeholder="Hour"
+                      value={formData.auctionEndTime ? (() => {
+                        try {
+                          const date = new Date(parseInt(formData.auctionEndTime) * 1000);
+                          let h = date.getHours();
+                          return h === 0 ? '12' : (h > 12 ? (h - 12).toString() : h.toString());
+                        } catch {
+                          return '';
+                        }
+                      })() : ''}
+                      onChange={(e) => {
+                        const hour12 = parseInt(e.target.value) || 0;
+                        let dateStr = new Date(Date.now() + 24*60*60*1000).toISOString().slice(0, 10);
+                        let ampm = 'AM';
+                        let minStr = '00';
+                        if (formData.auctionEndTime) {
+                          try {
+                            const date = new Date(parseInt(formData.auctionEndTime) * 1000);
+                            if (!isNaN(date.getTime())) {
+                              dateStr = date.toISOString().slice(0, 10);
+                              const h = date.getHours();
+                              ampm = h >= 12 ? 'PM' : 'AM';
+                              minStr = date.toTimeString().slice(3, 5);
+                            }
+                          } catch {}
+                        }
+                        const fullHour24 = ampm === 'PM' ? hour12 + 12 : (hour12 === 12 ? 0 : hour12);
+                        const date = new Date(`${dateStr}T${String(fullHour24).padStart(2, '0')}:${minStr}:00`);
+                        const timestamp = Math.floor(date.getTime() / 1000).toString();
+                        setFormData(prev => ({ ...prev, auctionEndTime: timestamp }));
+                      }}
+                      className="p-4 border border-slate-200 rounded-xl focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 focus:outline-none text-center"
+                    />
+                    <input
+                      type="number"
+                      min="0"
+                      max="59"
+                      step="1"
+                      placeholder="Minute"
+                      value={formData.auctionEndTime ? (() => {
+                        try {
+                          const date = new Date(parseInt(formData.auctionEndTime) * 1000);
+                          return date.getMinutes().toString();
+                        } catch {
+                          return '';
+                        }
+                      })() : ''}
+                      onChange={(e) => {
+                        const min = parseInt(e.target.value) || 0;
+                        let dateStr = new Date(Date.now() + 24*60*60*1000).toISOString().slice(0, 10);
+                        let hour12 = 12;
+                        let ampm = 'AM';
+                        if (formData.auctionEndTime) {
+                          try {
+                            const date = new Date(parseInt(formData.auctionEndTime) * 1000);
+                            if (!isNaN(date.getTime())) {
+                              dateStr = date.toISOString().slice(0, 10);
+                              const h = date.getHours();
+                              hour12 = h === 0 ? 12 : (h > 12 ? h - 12 : h);
+                              ampm = h >= 12 ? 'PM' : 'AM';
+                            }
+                          } catch {}
+                        }
+                        const fullHour24 = ampm === 'PM' ? hour12 + 12 : (hour12 === 12 ? 0 : hour12);
+                        const date = new Date(`${dateStr}T${String(fullHour24).padStart(2, '0')}:${String(min).padStart(2, '0')}:00`);
+                        const timestamp = Math.floor(date.getTime() / 1000).toString();
+                        setFormData(prev => ({ ...prev, auctionEndTime: timestamp }));
+                      }}
+                      className="p-4 border border-slate-200 rounded-xl focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 focus:outline-none text-center"
+                    />
+                    <select
+                      value={formData.auctionEndTime ? (() => {
+                        try {
+                          const date = new Date(parseInt(formData.auctionEndTime) * 1000);
+                          return date.getHours() >= 12 ? 'PM' : 'AM';
+                        } catch {
+                          return 'AM';
+                        }
+                      })() : 'AM'}
+                      onChange={(e) => {
+                        const ampm = e.target.value;
+                        let dateStr = new Date(Date.now() + 24*60*60*1000).toISOString().slice(0, 10);
+                        let hour12 = 12;
+                        let min = 0;
+                        if (formData.auctionEndTime) {
+                          try {
+                            const date = new Date(parseInt(formData.auctionEndTime) * 1000);
+                            if (!isNaN(date.getTime())) {
+                              dateStr = date.toISOString().slice(0, 10);
+                              const h = date.getHours();
+                              hour12 = h === 0 ? 12 : (h > 12 ? h - 12 : h);
+                              min = date.getMinutes();
+                            }
+                          } catch {}
+                        }
+                        const fullHour24 = ampm === 'PM' ? hour12 + 12 : (hour12 === 12 ? 0 : hour12);
+                        const date = new Date(`${dateStr}T${String(fullHour24).padStart(2, '0')}:${String(min).padStart(2, '0')}:00`);
+                        const timestamp = Math.floor(date.getTime() / 1000).toString();
+                        setFormData(prev => ({ ...prev, auctionEndTime: timestamp }));
+                      }}
+                      className="p-4 border border-slate-200 rounded-xl focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 focus:outline-none text-center"
+                    >
+                      <option value="AM">AM</option>
+                      <option value="PM">PM</option>
+                    </select>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
             <div>
               <label className="block text-sm font-bold text-slate-700 mb-2">Creator Address</label>
               <input
@@ -211,7 +452,7 @@ export function UploadArtModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
             </button>
             <button
               type="submit"
-              disabled={uploadMutation.isPending || !formData.file}
+              disabled={uploadMutation.isPending || !formData.file || (formData.listingType === 'fixed' && !formData.fixedPrice) || (formData.listingType === 'auction' && (!formData.startingPrice || !formData.auctionEndTime))}
               className="flex-1 flex items-center justify-center gap-2 py-4 px-6 bg-gradient-to-r from-cyan-500 to-cyan-600 text-white font-black rounded-xl hover:from-cyan-600 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all text-sm uppercase tracking-wider"
             >
               {uploadMutation.isPending ? (

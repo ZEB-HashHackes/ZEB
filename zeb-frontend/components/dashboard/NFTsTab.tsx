@@ -5,7 +5,14 @@ import { UploadArtModalTrigger } from './UploadArtModalTrigger'
 import { Search, Filter, BookOpen, Music, Palette, UploadCloud } from 'lucide-react'
 import NFTCard from './NFTCard'
 import NFTDetailModal from './NFTDetailModal'
+import ListAuctionModal from './ListAuctionModal'
+import { useDashboardArts } from '@/hooks/useDashboardArts'
+import { useQuery } from '@tanstack/react-query'
+import { getSellerAuctions } from '@/lib/api'
+import { useWallet } from '@/providers/WalletProvider'
 import type { NFTCardProps, Status } from './NFTCard'
+import type { Art } from '@/lib/types'
+
 
 interface NFT {
   id: number
@@ -56,10 +63,17 @@ export default function NFTsTab() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [nfts, setNfts] = useState<NFT[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [selectedForListing, setSelectedForListing] = useState<string | null>(null)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
 
+  const { wallet } = useWallet()
   const creatorArts = useDashboardArts('creator');
   const ownedArts = useDashboardArts('owner');
+  const sellerAuctions = useQuery({
+    queryKey: ['auctions', wallet?.address],
+    queryFn: () => getSellerAuctions(wallet.address as string),
+    enabled: !!wallet?.address,
+  });
 
   React.useEffect(() => {
     if (creatorArts.data || ownedArts.data) {
@@ -70,21 +84,21 @@ export default function NFTsTab() {
   const getCurrentNfts = () => {
     if (activeTab === 'owned') return ownedArts.data?.data || [];
     if (activeTab === 'created') return creatorArts.data?.data || [];
-    return []; // listings TODO
+    if (activeTab === 'listings') return sellerAuctions.data?.data || [];
+    return [];
   };
 
-  const nfts = getCurrentNfts();
+  const nfts = getCurrentNfts() as Art[];
 
   const filteredNFTs = useMemo(() => {
-    return nfts.filter((nft) => {
-      const matchesSearch = nft.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            nft.creator.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesType = selectedType === 'all' || nft.type === selectedType
-      const matchesGenre = selectedGenre === 'all' || nft.genre === selectedGenre
-      const matchesStatus = selectedStatus === 'all' || nft.status === selectedStatus
-      return matchesSearch && matchesType && matchesGenre && matchesStatus
+    return (nfts as any[]).filter((nft: any) => {
+      const matchesSearch = nft.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            nft.creatorBy?.toLowerCase().includes(searchQuery.toLowerCase())
+      // Skip type/genre for listings/real data (mock fields)
+      const matchesStatus = selectedStatus === 'all'
+      return matchesSearch && matchesStatus
     })
-  }, [nfts, searchQuery, selectedType, selectedGenre, selectedStatus])
+  }, [nfts, searchQuery, selectedStatus])
 
   const emptyMessage = activeTab === 'owned' 
     ? 'No NFTs in your collection yet → Browse marketplace to start collecting!'
@@ -199,8 +213,8 @@ export default function NFTsTab() {
               };
 
               if (activeTab === 'owned') {
-                return <NFTCard key={key} {...commonProps} status="NOT_LISTED" price={parseFloat(nft.price)} onSell={() => console.log('Sell owned NFT', nft.id)} onCardClick={() => {
-                  setSelectedNFT(nft)
+                return <NFTCard key={nft._id} {...commonProps} id={nft._id} title={nft.title || 'Untitled'} image={nft.filePath || '/file.svg'} status="NOT_LISTED" price={nft.minPrice || 0} onSell={() => setSelectedForListing(nft._id || nft.contentHash || '')} onCardClick={() => {
+                  setSelectedNFT({ id: 1, title: nft.title, price: nft.minPrice?.toString() || '0', img: nft.filePath, creator: nft.creatorBy, type: 'digital art' as const, genre: 'other' as const } as any)
                   setIsModalOpen(true)
                 }} />;
               }
@@ -250,7 +264,7 @@ export default function NFTsTab() {
               nft={selectedNFT}
               isOpen={isModalOpen}
               onClose={() => setIsModalOpen(false)}
-              currentUserAddress="GCF2A...3X9Y"
+              currentUserAddress={wallet?.address || 'GCF2A...3X9Y'}
               onSale={(nftId) => {
                 console.log('Open sale for NFT', nftId)
                 setIsModalOpen(false)
@@ -260,10 +274,13 @@ export default function NFTsTab() {
                 setIsModalOpen(false)
               }}
             />
+            <ListAuctionModal artId={selectedForListing} isOpen={!!selectedForListing} onClose={() => setSelectedForListing(null)} />
           </div>
         </div>
       </div>
     </section>
   )
 }
+import Link from 'next/link'
+
 

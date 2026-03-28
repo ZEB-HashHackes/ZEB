@@ -41,7 +41,8 @@ export async function getListings() {
   return { data: [] as Art[] };
 }
 
-export async function getAuctions(address: string) {
-  // Placeholder
-  return { data: [] };
-}
+// Auctions reverted to static mock data only (removed real-time fetch)
+// getAuctions removed - no backend /auction/active endpoint exists
+
+// Fixed price listing TODO
+// export async function createFixedListing(...) { }

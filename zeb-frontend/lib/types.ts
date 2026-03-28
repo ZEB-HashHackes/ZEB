@@ -11,18 +11,17 @@ export interface Art {
   ownedBy: string;
   category: string;
   minPrice: number;
+  listingStatus?: 'NOT_LISTED' | 'AUCTION' | 'FIXED_PRICE';
+  listingType?: 'fixed' | 'auction';
+  fixedPrice?: number;
+  startingPrice?: number;
+  auctionEndTime?: number;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface Auction {
-  artworkHash: string;
-  seller: string;
-  startTime: number;
-  endTime: number;
-  highestBid: number;
-  highestBidder?: string;
-}
+// Auction interfaces removed - reverted to static/mock data only
+// AuctionWithArt and Auction removed
 
 export interface Listing {
   artworkHash: string;
