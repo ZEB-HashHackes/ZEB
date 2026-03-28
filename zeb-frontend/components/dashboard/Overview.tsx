@@ -22,10 +22,8 @@ const StatCard = ({ label, value, icon, trend }: { label: string; value: string;
 
 export default function Overview() {
   const [stats, setStats] = React.useState({
-    created: 0,
     owned: 0,
     bought: 0,
-    uploaded: 0,
     totalEarnings: 0
   });
   const [username, setUsername] = React.useState('Arthemus');
@@ -36,42 +34,14 @@ export default function Overview() {
     const storedUsername = localStorage.getItem('zeb_username');
     if (storedUsername) setUsername(storedUsername);
 
-    if (address) {
-      fetchStats(address);
-    } else {
-      setLoading(false); // If no address, stop loading and show default 0s
-    }
+    // Mock stats - no upload fetches
+    setStats({
+      owned: 0,
+      bought: 0,
+      totalEarnings: 0
+    });
+    setLoading(false);
   }, []);
-
-  const fetchStats = async (address: string) => {
-    try {
-      const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-      
-      // Fetch Created
-      const createdRes = await fetch(`${baseUrl}/arts/creator/${address}`);
-      const createdData = await createdRes.json();
-      
-      // Fetch Owned
-      const ownedRes = await fetch(`${baseUrl}/arts/owner/${address}`);
-      const ownedData = await ownedRes.json();
-
-      setStats({
-        created: createdData.data?.length || 0,
-        owned: ownedData.data?.length || 0,
-        bought: 0, // Mock for now until activity endpoint is ready
-        uploaded: createdData.data?.length || 0,
-        totalEarnings: (createdData.data || []).reduce((acc: number, art: any) => {
-          const val = parseFloat(art.minPrice) || 0;
-          // If value is huge (>= 1,000,000), it's likely Stroops (10^7 = 1 XLM)
-          return acc + (val >= 1000000 ? val / 10000000 : val);
-        }, 0)
-      });
-    } catch (err) {
-      console.error("Error fetching stats:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Mock chart data
   const chartData = [30, 45, 35, 60, 55, 80, 75]
@@ -97,12 +67,10 @@ export default function Overview() {
         </motion.div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatCard label="Total Earnings" value={`$${stats.totalEarnings.toFixed(2)}`} icon={<DollarSign size={18} className="text-emerald-500" />} trend="+12.5%" />
-        <StatCard label="Uploaded Assets" value={stats.uploaded.toString()} icon={<ImageIcon size={18} className="text-cyan-600" />} />
         <StatCard label="Items Bought" value={stats.bought.toString()} icon={<Briefcase size={18} className="text-indigo-500" />} />
         <StatCard label="Items Owned" value={stats.owned.toString()} icon={<User size={18} className="text-amber-500" />} />
-        <StatCard label="Created Now" value={stats.created.toString()} icon={<Plus size={18} className="text-rose-500" />} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -165,7 +133,7 @@ export default function Overview() {
              </div>
           </div>
           <Link href="/dashboard/upload" className="mt-8 py-4 bg-cyan-400 text-slate-900 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl text-center hover:bg-cyan-500 transition-all">
-             Mint New Asset
+             Upload New Asset
           </Link>
           <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-cyan-400/10 blur-[80px] rounded-full" />
         </div>

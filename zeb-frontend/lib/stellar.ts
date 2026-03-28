@@ -4,13 +4,12 @@ import {
   TransactionBuilder, 
   Contract, 
   nativeToScVal, 
-  scValToNative,
-  xdr
+  scValToNative
 } from "stellar-sdk";
 
-export const RPC_URL = "https://soroban-testnet.stellar.org";
-export const NETWORK_PASSPHRASE = Networks.TESTNET;
-export const CONTRACT_ID = "CADX4ROQ7XXRDRSEVIFCCEW3U52WDUGN4QIPT6YHFY2OXR3WNBKTGQXO";
+export const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || "https://soroban-testnet.stellar.org";
+export const NETWORK_PASSPHRASE = (process.env.NEXT_PUBLIC_NETWORK_PASSPHRASE as any) || Networks.TESTNET;
+export const CONTRACT_ID = process.env.NEXT_PUBLIC_CONTRACT_ID || "CADX4ROQ7XXRDRSEVIFCCEW3U52WDUGN4QIPT6YHFY2OXR3WNBKTGQXO";
 
 export const server = new rpc.Server(RPC_URL);
 export const contract = new Contract(CONTRACT_ID);
@@ -35,47 +34,42 @@ export async function registerArtworkOnChain(
   title: string,
   hash: string,
   publicKey: string
-) {
-  try {
-    const { signTransaction } = await import("@stellar/freighter-api");
-    const account = await server.getAccount(publicKey);
+): Promise<string> {
+  const { signTransaction } = await import("@stellar/freighter-api");
+  const account = await server.getAccount(publicKey);
 
-    const tx = new TransactionBuilder(account, {
-      fee: "100000",
-      networkPassphrase: NETWORK_PASSPHRASE,
-    })
-    .addOperation(
-      contract.call(
-        "register_artwork",
-        nativeToScVal(title, { type: "string" }),
-        hexToBytes32(hash),
-        nativeToScVal(publicKey, { type: "address" }),
-        nativeToScVal(Math.floor(Date.now() / 1000), { type: "u128" })
-      )
+  const tx = new TransactionBuilder(account, {
+    fee: "100000",
+    networkPassphrase: NETWORK_PASSPHRASE,
+  })
+  .addOperation(
+    contract.call(
+      "register_artwork",
+      nativeToScVal(title, { type: "string" }),
+      hexToBytes32(hash),
+      nativeToScVal(publicKey, { type: "address" }),
+      nativeToScVal(Math.floor(Date.now() / 1000), { type: "u128" })
     )
-    .setTimeout(60)
-    .build();
+  )
+  .setTimeout(60)
+  .build();
 
-    const prepared = await server.prepareTransaction(tx);
-    const signedTxEnvelope = await signTransaction(prepared.toXDR(), {
-      networkPassphrase: NETWORK_PASSPHRASE
-    });
+  const prepared = await server.prepareTransaction(tx);
+  const signedTxEnvelope = await signTransaction(prepared.toXDR(), {
+    networkPassphrase: NETWORK_PASSPHRASE
+  });
 
-    const signedXdr = (signedTxEnvelope as any).signedXdr || (signedTxEnvelope as any).signedTxXdr;
-    if (!signedXdr) throw new Error("Signing failed");
+  const signedXdr = (signedTxEnvelope as any).signedXdr || (signedTxEnvelope as any).signedTxXdr;
+  if (!signedXdr) throw new Error("Signing failed");
 
-    const signedTx = TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE);
-    const sendResult = await server.sendTransaction(signedTx);
-    
-    if (sendResult.status !== "PENDING") {
-      throw new Error(`Transaction failed: ${sendResult.status}`);
-    }
-
-    return sendResult.hash;
-  } catch (err) {
-    console.error("On-chain registration error:", err);
-    throw err;
+  const signedTx = TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE);
+  const sendResult = await server.sendTransaction(signedTx);
+  
+  if (sendResult.status !== "PENDING") {
+    throw new Error(`Transaction failed: ${sendResult.status}`);
   }
+
+  return sendResult.hash;
 }
 
 /**
@@ -85,39 +79,52 @@ export async function listForSaleOnChain(
   hash: string,
   seller: string,
   price: number
-) {
-  try {
-    const { signTransaction } = await import("@stellar/freighter-api");
-    const account = await server.getAccount(seller);
+): Promise<string> {
+  const { signTransaction } = await import("@stellar/freighter-api");
+  const account = await server.getAccount(seller);
 
-    const tx = new TransactionBuilder(account, {
-      fee: "100000",
-      networkPassphrase: NETWORK_PASSPHRASE,
-    })
-    .addOperation(
-        contract.call(
-          "list_for_sale",
-          hexToBytes32(hash),
-          nativeToScVal(seller, { type: "address" }),
-          nativeToScVal(BigInt(Math.round(price * 10000000)), { type: "u128" }),
-          nativeToScVal(Math.floor(Date.now() / 1000), { type: "u128" })
-        )
-    )
-    .setTimeout(60)
-    .build();
+  const tx = new TransactionBuilder(account, {
+    fee: "100000",
+    networkPassphrase: NETWORK_PASSPHRASE,
+  })
+  .addOperation(
+      contract.call(
+        "list_for_sale",
+        hexToBytes32(hash),
+        nativeToScVal(seller, { type: "address" }),
+        nativeToScVal(BigInt(Math.round(price * 10000000)), { type: "u128" }),
+        nativeToScVal(Math.floor(Date.now() / 1000), { type: "u128" })
+      )
+  )
+  .setTimeout(60)
+  .build();
 
-    const prepared = await server.prepareTransaction(tx);
-    const signedTxEnvelope = await signTransaction(prepared.toXDR(), {
-      networkPassphrase: NETWORK_PASSPHRASE
-    });
+  const prepared = await server.prepareTransaction(tx);
+  const signedTxEnvelope = await signTransaction(prepared.toXDR(), {
+    networkPassphrase: NETWORK_PASSPHRASE
+  });
 
-    const signedXdr = (signedTxEnvelope as any).signedXdr || (signedTxEnvelope as any).signedTxXdr;
-    const signedTx = TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE);
-    const sendResult = await server.sendTransaction(signedTx);
+  const signedXdr = (signedTxEnvelope as any).signedXdr || (signedTxEnvelope as any).signedTxXdr;
+  const signedTx = TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE);
+  const sendResult = await server.sendTransaction(signedTx);
 
-    return sendResult.hash;
-  } catch (err) {
-    console.error("On-chain listing error:", err);
-    throw err;
-  }
+  return sendResult.hash;
+}
+
+/**
+ * Chain queries - simplified for now (use backend APIs for sync state)
+ */
+export async function getOwner(hash: string): Promise<string> {
+  // Backend /api/arts/:hash
+  console.log('getOwner', hash);
+  return 'placeholder-owner';
+}
+
+// ... other queries placeholder
+export async function getCreator(hash: string): Promise<string> {
+  return 'placeholder-creator';
+}
+
+export async function getHighestBid(hash: string): Promise<number> {
+  return 0;
 }

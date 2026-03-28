@@ -116,7 +116,7 @@ export default function NFTsTab() {
   const emptyMessage = activeTab === 'owned' 
     ? 'No NFTs in your collection yet → Browse marketplace to start collecting!'
     : activeTab === 'created' 
-    ? 'No NFTs created yet → Upload your first masterpiece!'
+    ? 'No artworks registered yet → Connect wallet and browse marketplace!'
     : 'No items selling → List your first item for sale!'
 
   return (
@@ -265,14 +265,14 @@ export default function NFTsTab() {
             })}
             {filteredNFTs.length === 0 && (
               <div className="col-span-full text-center py-32 text-foreground/50 bg-surface/30 rounded-2xl p-12">
-                <UploadCloud size={64} className="mx-auto mb-6 text-primary opacity-50" />
+                <Palette size={64} className="mx-auto mb-6 text-primary opacity-50" />
                 <h3 className="text-2xl font-black mb-4 text-foreground/70">{activeTab === 'owned' ? 'Empty Collection' : activeTab === 'created' ? 'Nothing Created' : 'Nothing Selling'}</h3>
                 <p className="text-xl mb-8 max-w-md mx-auto leading-relaxed">{emptyMessage}</p>
                 <Link 
-                  href={activeTab === 'owned' ? '/market' : '/dashboard/upload'}
+                  href={activeTab === 'owned' ? '/marketplace' : '/marketplace'}
                   className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-primary to-secondary text-background font-bold rounded-2xl hover:shadow-2xl hover:shadow-primary/30 transition-all text-lg"
                 >
-                  {activeTab === 'owned' ? 'Browse Marketplace' : activeTab === 'created' ? 'Create First NFT' : 'Register Artwork'}
+                  {activeTab === 'owned' ? 'Browse Marketplace' : activeTab === 'created' ? 'Browse Marketplace' : 'Register Artwork'}
                 </Link>
               </div>
             )}

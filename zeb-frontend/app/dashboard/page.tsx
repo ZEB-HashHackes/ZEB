@@ -19,7 +19,7 @@ export default function Dashboard() {
         <ArtGrid 
           filter="created" 
           title="My Works" 
-          emptyMessage="You haven't created any digital masterpieces yet. Start your journey by uploading your first work!" 
+          emptyMessage="No artworks yet. Connect your wallet and start collecting from the marketplace!" 
         />
       )
       case 'earnings': return <WalletView />
