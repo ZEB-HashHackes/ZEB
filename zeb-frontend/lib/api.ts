@@ -7,14 +7,11 @@ export async function uploadArt(formData: FormData) {
     method: 'POST',
     body: formData,
   });
+  const data = await res.json();
   if (!res.ok) {
-    if (res.status === 409) {
-      const data = await res.json();
-      throw new Error(data.message || 'Duplicate artwork');
-    }
-    throw new Error('Upload failed');
+    throw new Error(data.message || 'Upload failed');
   }
-  return res.json();
+  return data;
 }
 
 export async function getArts(): Promise<{ data: Art[] }> {
@@ -35,6 +32,19 @@ export async function getActivities(address: string): Promise<{ data: Activity[]
   return res.json();
 }
 
+export async function createAuction(data: { art_hash: string; seller: string; end_time: number }) {
+  const res = await fetch(`${API_BASE}/auction/create`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error.message || 'Failed to create auction');
+  }
+  return res.json();
+}
+
 // Backend TODO: /api/listings, /api/auctions/seller/:addr
 export async function getListings() {
   // Placeholder - backend needed
@@ -43,6 +53,10 @@ export async function getListings() {
 
 // Auctions reverted to static mock data only (removed real-time fetch)
 // getAuctions removed - no backend /auction/active endpoint exists
+
+export async function getSellerAuctions(seller: string) {
+  return { data: [] as Art[] };
+}
 
 // Fixed price listing TODO
 // export async function createFixedListing(...) { }

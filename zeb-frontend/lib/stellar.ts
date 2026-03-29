@@ -1,126 +1,289 @@
-import { 
-  rpc, 
-  Networks, 
-  TransactionBuilder, 
-  Contract, 
-  nativeToScVal, 
-  scValToNative
-} from "stellar-sdk";
+'use client';
 
-export const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || "https://soroban-testnet.stellar.org";
-export const NETWORK_PASSPHRASE = (process.env.NEXT_PUBLIC_NETWORK_PASSPHRASE as any) || Networks.TESTNET;
-export const CONTRACT_ID = process.env.NEXT_PUBLIC_CONTRACT_ID || "CADX4ROQ7XXRDRSEVIFCCEW3U52WDUGN4QIPT6YHFY2OXR3WNBKTGQXO";
+import {
+  rpc,
+  TransactionBuilder,
+  Contract,
+  nativeToScVal,
+  Address,
+} from 'stellar-sdk';
+
+export const RPC_URL =
+  process.env.NEXT_PUBLIC_RPC_URL || 'https://soroban-testnet.stellar.org';
+
+export const CONTRACT_ID =
+  process.env.NEXT_PUBLIC_CONTRACT_ID ||
+  'CADX4ROQ7XXRDRSEVIFCCEW3U52WDUGN4QIPT6YHFY2OXR3WNBKTGQXO';
 
 export const server = new rpc.Server(RPC_URL);
 export const contract = new Contract(CONTRACT_ID);
 
 /**
- * Converts a 64-character hex hash to a Soroban BytesN<32> ScVal.
+ * Converts a 64-character hex hash to BytesN<32>
  */
 export function hexToBytes32(hex: string) {
-  if (hex.length !== 64) {
-    throw new Error("Hash must be exactly 64 hex characters (32 bytes)");
+  if (!/^[0-9a-fA-F]{64}$/.test(hex)) {
+    throw new Error('Hash must be a valid 64-character hex string');
   }
+
   const bytes = Uint8Array.from(
-    hex.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16))
+    hex.match(/.{1,2}/g)!.map((b) => parseInt(b, 16))
   );
-  return nativeToScVal(bytes, { type: "bytes" });
+
+  if (bytes.length !== 32) throw new Error('Hash must be exactly 32 bytes');
+
+  return nativeToScVal(bytes, { type: 'bytes' } as any);
 }
 
 /**
- * Registers an artwork on the Soroban smart contract.
+ * Poll transaction until SUCCESS or FAILED
+ */
+export async function pollTransaction(hash: string) {
+  const start = Date.now();
+  const timeout = 30000;
+
+  while (true) {
+    try {
+      const status = await server.getTransaction(hash);
+      console.log('TX STATUS:', status.status);
+
+      if (status.status === 'SUCCESS') {
+        console.log('✅ TX SUCCESS:', hash);
+        return status;
+      }
+
+    if (status.status === 'FAILED') {
+      console.error('❌ TX FAILED:', hash);
+      console.error('- Results:', (status as any).results);
+      console.error('- Events:', (status as any).events || 'N/A');
+      if ((status as any).results?.[0]?.exception) {
+        console.error('- Exception:', (status as any).results[0].exception);
+      }
+      if ((status as any).results?.[0]?.ret) {
+        console.error('- Return value:', (status as any).results[0].ret);
+      }
+      throw new Error(`Transaction FAILED: ${hash}. "Bad union switch: 4" usually means contract error (wrong ID/hash/param). Check simulation first.`);
+    }
+
+      if (Date.now() - start > timeout) {
+        throw new Error(`Transaction timeout: ${hash}`);
+      }
+
+      await new Promise((r) => setTimeout(r, 2000));
+    } catch (err: any) {
+      console.error('Poll error:', err.message);
+      throw err;
+    }
+  }
+}
+
+/**
+ * COMMON: prepare → sign → send → confirm
+ */
+async function signAndSend(tx: any, networkPassphrase: string, opName: string) {
+  const { signTransaction } = await import('@stellar/freighter-api');
+
+  console.log(`🧪 SIMULATING ${opName}...`);
+  
+  // SIMULATION FIRST - catch contract errors BEFORE Freighter popup
+  try {
+    const simResult = await server.simulateTransaction(tx);
+    console.log(`${opName} SIMULATION:`, simResult);
+    
+    const simRes = (simResult as any).results?.[0];
+    if (!simRes) {
+      throw new Error(`No simulation result for ${opName}`);
+    }
+    if (simRes.exception) {
+      throw new Error(`Simulation FAILED (${opName}): ${simRes.exception}. Check CONTRACT_ID/hash/title/timestamp.`);
+    }
+    if (!simRes.success) {
+      throw new Error(`Simulation not successful for ${opName}:`, simRes);
+    }
+    console.log(`✅ ${opName} simulation passed`);
+  } catch (simErr: any) {
+    console.error(`❌ Simulation error for ${opName}:`, simErr);
+    throw simErr;
+  }
+
+  tx = await server.prepareTransaction(tx);
+
+  let signedTxEnvelope;
+  try {
+    signedTxEnvelope = await signTransaction(tx.toXDR(), {
+      networkPassphrase,
+    });
+  } catch {
+    throw new Error('User rejected the transaction in Freighter');
+  }
+
+  const signedXdr =
+    (signedTxEnvelope as any).signedXdr ||
+    (signedTxEnvelope as any).signedTxXdr;
+
+  if (!signedXdr) throw new Error('Signing failed');
+
+  const signedTx = TransactionBuilder.fromXDR(
+    signedXdr,
+    networkPassphrase
+  );
+
+  const sendResult = await server.sendTransaction(signedTx);
+
+  if (sendResult.status !== 'PENDING') {
+    throw new Error(`Transaction failed to submit: ${sendResult.status}`);
+  }
+
+  await pollTransaction(sendResult.hash);
+
+  return sendResult.hash;
+}
+
+/**
+ * Registers artwork
  */
 export async function registerArtworkOnChain(
   title: string,
   hash: string,
   publicKey: string
-): Promise<string> {
-  const { signTransaction } = await import("@stellar/freighter-api");
-  const account = await server.getAccount(publicKey);
+) {
+  const { getNetworkDetails } = await import('@stellar/freighter-api');
+  const network = await getNetworkDetails();
 
-  const tx = new TransactionBuilder(account, {
-    fee: "100000",
-    networkPassphrase: NETWORK_PASSPHRASE,
-  })
-  .addOperation(
-    contract.call(
-      "register_artwork",
-      nativeToScVal(title, { type: "string" }),
-      hexToBytes32(hash),
-      nativeToScVal(publicKey, { type: "address" }),
-      nativeToScVal(Math.floor(Date.now() / 1000), { type: "u128" })
-    )
-  )
-  .setTimeout(60)
-  .build();
-
-  const prepared = await server.prepareTransaction(tx);
-  const signedTxEnvelope = await signTransaction(prepared.toXDR(), {
-    networkPassphrase: NETWORK_PASSPHRASE
-  });
-
-  const signedXdr = (signedTxEnvelope as any).signedXdr || (signedTxEnvelope as any).signedTxXdr;
-  if (!signedXdr) throw new Error("Signing failed");
-
-  const signedTx = TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE);
-  const sendResult = await server.sendTransaction(signedTx);
-  
-  if (sendResult.status !== "PENDING") {
-    throw new Error(`Transaction failed: ${sendResult.status}`);
+  if (network.network.toUpperCase() !== 'TESTNET') {
+    throw new Error(`Switch Freighter to Testnet. Currently: ${network.network}`);
   }
 
-  return sendResult.hash;
+  const account = await server.getAccount(publicKey);
+  const ts = BigInt(Math.floor(Date.now() / 1000));
+
+  // Debug log parameters
+  console.log({
+    title,
+    hash,
+    publicKey,
+    timestamp: ts.toString(),
+  });
+
+  let tx = new TransactionBuilder(account, {
+    fee: '100000',
+    networkPassphrase: network.networkPassphrase,
+  })
+    .addOperation(
+      contract.call(
+        'register_artwork',
+        nativeToScVal(title, { type: 'string' }),
+        hexToBytes32(hash),
+        Address.fromString(publicKey).toScVal(),
+        nativeToScVal(ts, { type: 'u128' })
+      )
+    )
+    .setTimeout(60)
+    .build();
+
+  console.log('CONTRACT_ID used:', CONTRACT_ID);
+  console.log('Hash validated:', hash);
+
+  return signAndSend(tx, network.networkPassphrase, 'register_artwork');
 }
 
 /**
- * Lists an artwork for fixed-price sale on-chain.
+ * List for fixed-price sale
  */
 export async function listForSaleOnChain(
   hash: string,
   seller: string,
   price: number
-): Promise<string> {
-  const { signTransaction } = await import("@stellar/freighter-api");
+) {
+  const { getNetworkDetails } = await import('@stellar/freighter-api');
+  const network = await getNetworkDetails();
+
+  if (network.network.toUpperCase() !== 'TESTNET') {
+    throw new Error(`Switch Freighter to Testnet. Currently: ${network.network}`);
+  }
+
   const account = await server.getAccount(seller);
+  const ts = BigInt(Math.floor(Date.now() / 1000));
+  const priceBigInt = BigInt(Math.round(price * 1e7));
 
-  const tx = new TransactionBuilder(account, {
-    fee: "100000",
-    networkPassphrase: NETWORK_PASSPHRASE,
-  })
-  .addOperation(
-      contract.call(
-        "list_for_sale",
-        hexToBytes32(hash),
-        nativeToScVal(seller, { type: "address" }),
-        nativeToScVal(BigInt(Math.round(price * 10000000)), { type: "u128" }),
-        nativeToScVal(Math.floor(Date.now() / 1000), { type: "u128" })
-      )
-  )
-  .setTimeout(60)
-  .build();
-
-  const prepared = await server.prepareTransaction(tx);
-  const signedTxEnvelope = await signTransaction(prepared.toXDR(), {
-    networkPassphrase: NETWORK_PASSPHRASE
+  console.log({
+    hash,
+    seller,
+    price: priceBigInt.toString(),
+    timestamp: ts.toString(),
   });
 
-  const signedXdr = (signedTxEnvelope as any).signedXdr || (signedTxEnvelope as any).signedTxXdr;
-  const signedTx = TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE);
-  const sendResult = await server.sendTransaction(signedTx);
+  let tx = new TransactionBuilder(account, {
+    fee: '100000',
+    networkPassphrase: network.networkPassphrase,
+  })
+    .addOperation(
+      contract.call(
+        'list_for_sale',
+        hexToBytes32(hash),
+        Address.fromString(seller).toScVal(),
+        nativeToScVal(priceBigInt, { type: 'u128' }),
+        nativeToScVal(ts, { type: 'u128' })
+      )
+    )
+    .setTimeout(60)
+    .build();
 
-  return sendResult.hash;
+  return signAndSend(tx, network.networkPassphrase, 'list_for_sale');
 }
 
 /**
- * Chain queries - simplified for now (use backend APIs for sync state)
+ * Create auction
+ */
+export async function createAuctionOnChain(
+  hash: string,
+  seller: string,
+  endTime: number
+) {
+  const { getNetworkDetails } = await import('@stellar/freighter-api');
+  const network = await getNetworkDetails();
+
+  if (network.network.toUpperCase() !== 'TESTNET') {
+    throw new Error(`Switch Freighter to Testnet. Currently: ${network.network}`);
+  }
+
+  const account = await server.getAccount(seller);
+  const ts = BigInt(Math.floor(Date.now() / 1000));
+  const endTs = BigInt(endTime);
+
+  console.log({
+    hash,
+    seller,
+    startTimestamp: ts.toString(),
+    endTimestamp: endTs.toString(),
+  });
+
+  let tx = new TransactionBuilder(account, {
+    fee: '100000',
+    networkPassphrase: network.networkPassphrase,
+  })
+    .addOperation(
+      contract.call(
+        'create_auction',
+        hexToBytes32(hash),
+        Address.fromString(seller).toScVal(),
+        nativeToScVal(ts, { type: 'u128' }),
+        nativeToScVal(endTs, { type: 'u128' })
+      )
+    )
+    .setTimeout(60)
+    .build();
+
+  return signAndSend(tx, network.networkPassphrase, 'create_auction');
+}
+
+/**
+ * Placeholder queries
  */
 export async function getOwner(hash: string): Promise<string> {
-  // Backend /api/arts/:hash
-  console.log('getOwner', hash);
   return 'placeholder-owner';
 }
 
-// ... other queries placeholder
 export async function getCreator(hash: string): Promise<string> {
   return 'placeholder-creator';
 }

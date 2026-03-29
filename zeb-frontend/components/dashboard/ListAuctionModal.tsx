@@ -16,9 +16,9 @@ const DialogContent = ({ children, className = '' }: { children: React.ReactNode
     {children}
   </div>
 )
-const DialogHeader = ({ children }: { children: React.ReactNode }) => <div className="p-6 pb-4">{children}</div>
-const DialogTitle = ({ children }: { children: React.ReactNode }) => <h2 className="text-2xl font-black">{children}</h2>
-const DialogDescription = ({ children }: { children: React.ReactNode }) => <p className="text-foreground/70">{children}</p>
+const DialogHeader = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => <div className={`p-6 pb-4 ${className}`}>{children}</div>
+const DialogTitle = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => <h2 className={`text-2xl font-black ${className}`}>{children}</h2>
+const DialogDescription = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => <p className={`text-foreground/70 ${className}`}>{children}</p>
 const Button = ({ children, onClick, variant = 'default', className = '', disabled }: { children: React.ReactNode; onClick: () => void; variant?: 'default' | 'outline'; className?: string; disabled?: boolean }) => (
   <button
     onClick={onClick}
@@ -46,7 +46,6 @@ const SelectContent = ({ children }: any) => children
 const SelectItem = ({ value, children }: { value: string; children: React.ReactNode }) => (
   <button 
     className="w-full text-left px-4 py-3 hover:bg-primary/10 first:rounded-t-xl last:rounded-b-xl" 
-    onClick={() => setOpen(false as any)}
   >
     {children}
   </button>
@@ -76,7 +75,12 @@ export default function ListAuctionModal({ artId, isOpen, onClose, art }: ListAu
   const handleList = async () => {
     if (!artId || !wallet?.address || !art?.contentHash) return
     try {
-      await createAuction({ artHash: art.contentHash, durationDays })
+      const end_time = Date.now() + durationDays * 86400000;
+      await createAuction({ art_hash: art.contentHash, seller: wallet.address, end_time })
+      
+      const { createAuctionOnChain } = await import('../../lib/stellar');
+      await createAuctionOnChain(art.contentHash, wallet.address, Math.floor(end_time / 1000));
+      
       onClose()
       // Optional: setActiveTab('listings') via context/parent
     } catch (error) {

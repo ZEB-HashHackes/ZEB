@@ -24,8 +24,8 @@ router.post("/", upload.single("file"), async (req, res) => {
       description,
       creatorBy,
       ownedBy,
-      category,
-      minPrice
+      category = "image",
+      minPrice = "0"
     } = req.body;
 
     if (!title || !creatorBy || !ownedBy) {
@@ -101,8 +101,8 @@ router.post("/", upload.single("file"), async (req, res) => {
       similarityMethod,
       creatorBy,
       ownedBy,
-      category: category || "image",
-      minPrice: parseFloat(minPrice || "0")
+      category,
+      minPrice: parseFloat(minPrice)
     } as any);
 
     res.status(201).json({

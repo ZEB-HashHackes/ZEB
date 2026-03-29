@@ -61,7 +61,6 @@ export default function NFTsTab() {
   const [selectedStatus, setSelectedStatus] = useState<'all' | 'auction'>('all')
   const [selectedNFT, setSelectedNFT] = useState<NFT | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [nfts, setNfts] = useState<NFT[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedForListing, setSelectedForListing] = useState<string | null>(null)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
@@ -71,7 +70,7 @@ export default function NFTsTab() {
   const ownedArts = useDashboardArts('owner');
   const sellerAuctions = useQuery({
     queryKey: ['auctions', wallet?.address],
-    queryFn: () => getSellerAuctions(wallet.address as string),
+    queryFn: () => getSellerAuctions(wallet?.address || ''),
     enabled: !!wallet?.address,
   });
 

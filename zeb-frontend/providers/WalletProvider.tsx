@@ -33,17 +33,18 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
 
-  // ---- SAFE AUTO RECONNECT ----
+  // ---- SAFE AUTO CHECK (NO POPUP) ----
   useEffect(() => {
     const checkConnection = async () => {
       try {
         const freighter = await import('@stellar/freighter-api');
 
+
         const isAllowed = await freighter.isAllowed();
         if (!isAllowed) return;
 
         const { address } = await freighter.getAddress();
-        const { network, networkPassphrase } = await freighter.getNetwork();
+        const { network } = await freighter.getNetworkDetails();
 
         setWallet({
           address,
@@ -56,16 +57,25 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     };
 
     checkConnection();
+
+
   }, []);
 
-  // ---- ACCOUNT CHANGE POLLING ----
+  // ---- ACCOUNT CHANGE POLLING (SAFE) ----
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
         const freighter = await import('@stellar/freighter-api');
 
+
+        const isAllowed = await freighter.isAllowed();
+        if (!isAllowed) {
+          setWallet(null);
+          return;
+        }
+
         const { address } = await freighter.getAddress();
-        const { network, networkPassphrase } = await freighter.getNetwork();
+        const { network } = await freighter.getNetworkDetails();
 
         setWallet((prev) => {
           if (
@@ -87,34 +97,33 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }, 5000);
 
     return () => clearInterval(interval);
+
+
   }, []);
 
-  // ---- CONNECT WALLET ----
+  // ---- CONNECT WALLET (USER ACTION ONLY) ----
   const connectWallet = async () => {
-    if (isConnecting || wallet?.isConnected) return;
+    if (isConnecting) return;
+
 
     setIsConnecting(true);
 
     try {
       const freighter = await import('@stellar/freighter-api');
 
-      const isAllowed = await freighter.isAllowed();
-
-      if (!isAllowed) {
-        await freighter.requestAccess();
-      }
+      const access = await freighter.requestAccess();
+      if (access.error) throw new Error(access.error);
 
       const { address } = await freighter.getAddress();
-const { network, networkPassphrase } = await freighter.getNetwork();
+      const { network } = await freighter.getNetworkDetails();
 
-// Use env config (default to TESTNET for dev)
-const REQUIRED_NETWORK =
-  process.env.NEXT_PUBLIC_STELLAR_NETWORK || 'TESTNET';
+      const REQUIRED_NETWORK =
+        process.env.NEXT_PUBLIC_STELLAR_NETWORK || 'TESTNET';
 
-if (network !== REQUIRED_NETWORK) {
-  alert(`Please switch Freighter to ${REQUIRED_NETWORK}`);
-  return;
-}
+      if (network.toUpperCase() !== REQUIRED_NETWORK.toUpperCase()) {
+        alert(`Please switch Freighter to ${REQUIRED_NETWORK}`);
+        return;
+      }
 
       setWallet({
         address,
@@ -125,10 +134,12 @@ if (network !== REQUIRED_NETWORK) {
       localStorage.setItem('walletAddress', address);
     } catch (error) {
       console.error('Wallet connect failed:', error);
-      alert('Freighter connection failed. Install or unlock Freighter.');
+      alert('Freighter connection failed.');
     } finally {
       setIsConnecting(false);
     }
+
+
   };
 
   // ---- DISCONNECT ----
@@ -137,33 +148,33 @@ if (network !== REQUIRED_NETWORK) {
     localStorage.removeItem('walletAddress');
   };
 
-  // ---- SIGN TRANSACTION (FOR FUTURE USE) ----
+  // ---- SIGN TRANSACTION (FORCE CONNECTION) ----
   const signTransaction = async (xdr: string): Promise<string | null> => {
-  try {
-    const freighter = await import('@stellar/freighter-api');
+    try {
+      const freighter = await import('@stellar/freighter-api');
 
-    if (!wallet) {
-      throw new Error('Wallet not connected');
-    }
 
-    const { networkPassphrase } = await freighter.getNetwork();
+      // Ensure connection every time
+      const access = await freighter.requestAccess();
+      if (access.error) throw new Error(access.error);
 
-    const result = await freighter.signTransaction(xdr, {
-      networkPassphrase,
-    });
+      const { networkPassphrase } = await freighter.getNetworkDetails();
 
-    // Handle possible error from Freighter
-    if ('error' in result && result.error) {
-      console.error('Freighter error:', result.error);
+      const result = await freighter.signTransaction(xdr, {
+        networkPassphrase,
+      });
+
+      if ('error' in result && result.error) {
+        console.error('Freighter error:', result.error);
+        return null;
+      }
+
+      return result.signedTxXdr;
+    } catch (error) {
+      console.error('Transaction signing failed:', error);
       return null;
     }
 
-    return result.signedTxXdr;
-
-  } catch (error) {
-    console.error('Transaction signing failed:', error);
-    return null;
-  }
 
   };
 
