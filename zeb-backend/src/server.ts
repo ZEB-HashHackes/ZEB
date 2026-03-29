@@ -13,7 +13,9 @@ import users from "./routes/user.routes.js"
 import arts from "./routes/art.routes.js"
 import verification from "./routes/verification.routes.js"
 import auction from "./routes/auction.routes.js"
-import activity from "./routes/activity.routes.js"
+import auctionRouter from "./routes/auction.routes.js";
+import adminRouter from "./routes/admin.routes.js";
+import activityRouter from "./routes/activity.routes.js";
 
 const app = express();
 app.use(cors());
@@ -48,7 +50,9 @@ app.use("/api/users", users);
 app.use("/api/arts", arts);
 app.use("/api/verify/", verification);
 app.use("/api/auction/", auction);
-app.use("/api/activity/", activity);
+app.use("/api/auction", auctionRouter);
+app.use("/api/admin", adminRouter);
+app.use("/api/activity", activityRouter);
 
 app.get("/", (req, res)=>{
   res.send("Zeb backend running");

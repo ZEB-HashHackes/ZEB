@@ -1,8 +1,11 @@
 import express from "express";
-import Art from "../models/art.model.js";
+import Art, { ArtStatus } from "../models/art.model.js";
+import Activity, { ActivityType } from "../models/Activity.model.js";
 import {Types} from "mongoose";
 import multer from "multer";
 import { ArtService } from "../services/art.service.js";
+import { RevenueService } from "../services/revenue.service.js";
+import { RevenueType } from "../models/revenue.model.js";
 
 const router = express.Router();
 
@@ -67,6 +70,7 @@ router.post("/", upload.single("file"), async (req, res) => {
     }
 
     // 2. Check for Similar Artworks
+    let status = ArtStatus.ACTIVE;
     if (similarityHash) {
       const similarExisting = await Art.findOne({ similarityHash, similarityMethod });
       if (similarExisting) {
@@ -81,11 +85,8 @@ router.post("/", upload.single("file"), async (req, res) => {
             }
           });
         } else {
-          // Different creator: Conflict
-          return res.status(409).json({
-            status: "error",
-            message: "Similar artwork already exists (plagiarism check failed)"
-          });
+          // Different creator: FLAG for review instead of hard block
+          status = ArtStatus.FLAGGED;
         }
       }
     }
@@ -99,15 +100,29 @@ router.post("/", upload.single("file"), async (req, res) => {
       contentHash,
       similarityHash,
       similarityMethod,
+      status, // New: Use calculated status
       creatorBy,
       ownedBy,
       category,
       minPrice: parseFloat(minPrice)
     } as any);
 
+    // LOG REVENUE: Assume a flat registration fee of 10 ZEB (constant for now)
+    await RevenueService.logRevenue(10, RevenueType.REGISTRATION, creatorBy, (art as any)._id);
+
+    // LOG ACTIVITY: MINTED
+    await Activity.create({
+      type: ActivityType.MINTED,
+      artId: (art as any)._id,
+      to: creatorBy,
+      timestamp: new Date()
+    });
+
     res.status(201).json({
-      status: "ok",
-      message: "Art created successfully",
+      status: status === ArtStatus.FLAGGED ? "flagged" : "ok",
+      message: status === ArtStatus.FLAGGED 
+        ? "Art created but flagged as similar to another artwork. Pending admin review."
+        : "Art created successfully",
       data: {
         artId: (art as any)._id,
         hash: contentHash
@@ -167,10 +182,10 @@ router.get("/:id", async (req, res) => {
     res.status(200).json({status:"ok", data: art});
 });
 
-// GET all artworks (Marketplace)
+// GET all artworks (Marketplace) - Only ACTIVE ones
 router.get("/", async (req, res) => {
   try {
-    const arts = await Art.find().sort({ createdAt: -1 });
+    const arts = await Art.find({ status: ArtStatus.ACTIVE }).sort({ createdAt: -1 });
     res.status(200).json({ status: "ok", data: arts });
   } catch (err) {
     res.status(500).json({ status: "error", message: "Error fetching artworks" });
@@ -228,7 +243,11 @@ router.put("/owner/:id", async (req, res) => {
                                                 {returnDocument: 'after', runValidators: true});
 
     if (!updated) return res.status(404).json({status:"error", message:"art not found"});
-    res.status(200).json({status:"ok", message:"owner upadated", data: updated.ownedBy});
+
+    // LOG REVENUE: Direct Ownership Transfer Fee (Flat 5 ZEB)
+    await RevenueService.logRevenue(5, RevenueType.TRANSFER, ownedBy, updated._id);
+
+    res.status(200).json({status:"ok", message:"owner updated", data: updated.ownedBy});
   }catch (err){
     console.log("Error upadating owner", err);
     res.status(500).json({status: "error", message:"Error upadating owner", data : err});

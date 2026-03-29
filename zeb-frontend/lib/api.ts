@@ -60,3 +60,23 @@ export async function getSellerAuctions(seller: string) {
 
 // Fixed price listing TODO
 // export async function createFixedListing(...) { }
+export async function getArtById(id: string): Promise<{ data: Art }> {
+  const res = await fetch(`${API_BASE}/arts/${id}`);
+  if (!res.ok) throw new Error('Failed to fetch art detail');
+  return res.json();
+}
+
+export async function getArtActivity(artId: string): Promise<{ data: Activity[] }> {
+  const res = await fetch(`${API_BASE}/activity/art/${artId}`);
+  if (!res.ok) throw new Error('Failed to fetch art activity');
+  return res.json();
+}
+
+export async function recordActivity(data: Partial<Activity>) {
+  const res = await fetch(`${API_BASE}/activity`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return res.json();
+}
