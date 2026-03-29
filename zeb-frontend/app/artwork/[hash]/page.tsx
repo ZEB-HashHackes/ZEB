@@ -8,7 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getArtById, getArtActivity, recordActivity } from '@/lib/api';
 import { buyNowOnChain, listForSaleOnChain } from '@/lib/stellar';
 import { useWallet } from '@/providers/WalletProvider';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from '@/lib/utils';
 
 export default function ArtworkDetailPage({
   params,
@@ -49,14 +49,14 @@ export default function ArtworkDetailPage({
       // a. On-chain
       await buyNowOnChain(art.contentHash, wallet.address);
       
-      // b. Sync to backend (optional, backend hooks usually handle this but for BuyNow we might want immediate sync)
+      // b. Sync to backend
       await recordActivity({
-        type: 'sale' as any,
-        artId: art._id as any,
+        type: 'sale',
+        artId: art._id,
         from: art.ownedBy,
         to: wallet.address,
         amount: art.fixedPrice || art.minPrice,
-      });
+      } as any);
 
       alert("Purchase successful!");
       queryClient.invalidateQueries({ queryKey: ['art', artId] });

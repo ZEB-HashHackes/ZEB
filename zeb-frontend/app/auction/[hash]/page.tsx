@@ -8,7 +8,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getArtById, getArtActivity } from '@/lib/api';
 import { placeBidOnChain, closeAuctionOnChain } from '@/lib/stellar';
 import { useWallet } from '@/providers/WalletProvider';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from '@/lib/utils';
 
 export default function AuctionDetailPage({
   params,
@@ -36,8 +36,8 @@ export default function AuctionDetailPage({
 
   const art = artRes?.data;
   const bids = (activityRes?.data || []).filter(a => a.type === 'bid');
-  const highestBid = bids.length > 0 ? bids[0].amount : (art?.minPrice || 0);
-  const highestBidder = bids.length > 0 ? bids[0].from : null;
+  const highestBid = bids.length > 0 ? (bids[0].amount || 0) : (art?.minPrice || 0);
+  const highestBidder = bids.length > 0 ? (bids[0].from || null) : null;
 
   // 3. Bid Logic
   const handleBid = async () => {
@@ -225,7 +225,7 @@ export default function AuctionDetailPage({
                               <User size={14} />
                            </div>
                            <div>
-                              <p className="text-[11px] font-black text-slate-900">{bid.from.slice(0, 8)}...</p>
+                              <p className="text-[11px] font-black text-slate-900">{(bid.from || 'Unknown').slice(0, 8)}...</p>
                               <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">{formatDistanceToNow(new Date(bid.timestamp), { addSuffix: true })}</p>
                            </div>
                         </div>

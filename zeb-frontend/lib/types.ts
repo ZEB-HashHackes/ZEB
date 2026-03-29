@@ -31,13 +31,14 @@ export interface Listing {
 }
 
 export interface Activity {
-  id: string;
-  type: 'purchase' | 'sale' | 'bid' | 'listing';
-  artworkHash: string;
-  amount: number;
-  counterparty: string;
+  _id: string;
+  type: 'minted' | 'listing' | 'sale' | 'bid' | 'cancelled';
+  artId: string;
+  from?: string;
+  to?: string;
+  amount?: number;
+  transactionHash?: string;
   timestamp: string;
-  status: 'completed' | 'pending';
 }
 
 export interface Wallet {
