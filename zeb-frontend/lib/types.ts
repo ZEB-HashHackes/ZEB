@@ -3,6 +3,7 @@ export interface Art {
   title: string;
   description: string;
   contentHash: string;
+  saleType: string
   similarityHash?: string;
   filePath: string;
   fileType: string;
@@ -12,7 +13,7 @@ export interface Art {
   category: string;
   minPrice: number;
   listingStatus?: 'NOT_LISTED' | 'AUCTION' | 'FIXED_PRICE';
-  listingType?: 'fixed' | 'auction';
+  listingType?: 'sell' | 'auction';
   fixedPrice?: number;
   startingPrice?: number;
   auctionEndTime?: number;

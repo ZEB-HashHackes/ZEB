@@ -210,10 +210,10 @@ pub fn place_bid(
     let mut auctions = auctions_map(&e);
     let mut auction = auctions
         .get(hash.clone())
-        .ok_or(ZebError::InvalidAuction)?;
+        .ok_or(ZebError::AuctionNotFound)?;
 
     if timestamp < auction.start_time || timestamp > auction.end_time {
-        return Err(ZebError::InvalidAuction);
+        return Err(ZebError::InvalidTime);
     }
 
     if amount <= auction.highest_bid {

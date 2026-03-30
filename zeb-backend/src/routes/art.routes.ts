@@ -22,6 +22,7 @@ router.post("/", upload.single("file"), async (req, res) => {
     const {
       title,
       description,
+      saleType,
       creatorBy,
       ownedBy,
       category = "image",
@@ -95,6 +96,7 @@ router.post("/", upload.single("file"), async (req, res) => {
       description,
       filePath: serviceFilePath,
       fileType,
+      saleType,
       mimeType,
       contentHash,
       similarityHash,

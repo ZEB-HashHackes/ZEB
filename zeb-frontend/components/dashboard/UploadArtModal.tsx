@@ -85,6 +85,7 @@ export function UploadArtModal({
       const fd = new FormData();
       fd.append('file', formData.file);
       fd.append('title', formData.title);
+      fd.append('saleType', formData.listingType);
       fd.append('description', formData.title);
       fd.append('creatorBy', wallet.address);
       fd.append('ownedBy', wallet.address);
