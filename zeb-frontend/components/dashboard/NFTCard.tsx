@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Clock, ShieldCheck, ShoppingBag, TrendingUp } from 'lucide-react'
+const { buynow, placeBid } = await import('../../lib/stellar');
 
 export type Status = 'auction' | 'direct' | 'not_listed' | 'AUCTION' | 'FIXED_PRICE' | 'NOT_LISTED'
 
@@ -73,7 +74,7 @@ export default function NFTCard({
           className="w-full py-3 bg-primary text-background font-black rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all active:scale-95 flex items-center justify-center gap-2"
         >
           <ShoppingBag size={18} />
-          BUY NOW
+          BUY NOT
         </button>
       )
     }

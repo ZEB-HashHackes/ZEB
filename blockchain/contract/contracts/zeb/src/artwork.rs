@@ -226,7 +226,6 @@ pub fn place_bid(
     // Collect service fees
     if fee_amount > 0 {
         token.transfer(&bidder, &zeb_receiver, &(fee_amount as i128));
-        token.transfer(&auction.seller, &zeb_receiver, &(fee_amount as i128));
     }
 
     // Refund previous highest bidder
@@ -418,7 +417,6 @@ pub fn buy_now(
     // Service fee from buyer
     if fee_amount > 0 {
         token.transfer(&buyer, &zeb_receiver, &(fee_amount as i128));
-        token.transfer(&seller, &zeb_receiver, &(fee_amount as i128));
     }
 
     // Transfer ownership
@@ -439,30 +437,7 @@ pub fn buy_now(
     Ok(())
 }
 
-// pub fn buy_now(
-//     e: Env,
-//     hash: BytesN<32>,
-//     buyer: Address,
-// ) -> Result<(), ZebError> {
-//     buyer.require_auth();
-//
-//     let mut listings = listings_map(&e);
-//     let listing = listings.get(hash.clone()).ok_or(ZebError::ListingNotFound)?;
-//
-//     let mut artworks = artworks_map(&e);
-//     let mut art = artworks.get(hash.clone()).ok_or(ZebError::ArtworkNotFound)?;
-//
-//     art.current_owner = buyer.clone();
-//     artworks.set(hash.clone(), art);
-//     save_artwork(&e, &artworks);
-//
-//     listings.remove(hash.clone());
-//     save_listing(&e, &listings);
-//
-//     events::artwork_bought(&e, hash, buyer, listing.price);
-//
-//     Ok(())
-// }
+
 
 pub fn get_listings(
     e: Env,

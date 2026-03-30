@@ -79,7 +79,7 @@ export default function ListAuctionModal({ artId, isOpen, onClose, art }: ListAu
       await createAuction({ art_hash: art.contentHash, seller: wallet.address, end_time })
       
       const { createAuctionOnChain } = await import('../../lib/stellar');
-      await createAuctionOnChain(art.contentHash, wallet.address, Math.floor(end_time / 1000));
+      await createAuctionOnChain(art.contentHash, wallet.address, Date.now() ,Math.floor(end_time / 1000));
       
       onClose()
       // Optional: setActiveTab('listings') via context/parent
