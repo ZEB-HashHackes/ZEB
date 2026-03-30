@@ -418,7 +418,7 @@ export default function ArtworkDetailPage() {
 
             <div className="flex items-center gap-2 mb-8">
               <span className="text-sm font-bold text-slate-400">By</span>
-              <span className="text-sm font-black text-cyan-500">
+              <span className="text-sm font-black text-primary">
                 {art.creatorBy}
               </span>
             </div>
@@ -468,6 +468,13 @@ export default function ArtworkDetailPage() {
                     className="w-full py-5 bg-cyan-400 text-slate-900 font-black rounded-[20px]"
                   >
                     {actionLoading ? 'Processing...' : 'Buy Now'}
+                <button onClick={() => handleBuy(art.contentHash || '', buyer)} className="w-full py-5 bg-primary text-slate-900 font-black rounded-[20px] text-sm hover:bg-primary/80 transition-all">
+                  Buy Now
+                </button>
+
+                {art.saleType === 'bid' && (
+                  <button className="w-full py-5 bg-white border border-slate-200 text-slate-900 font-black rounded-[20px] text-sm hover:bg-slate-50 transition-all">
+                    Place Bid
                   </button>
                 )}
 
