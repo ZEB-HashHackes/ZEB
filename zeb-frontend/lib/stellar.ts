@@ -11,7 +11,7 @@ import {
 
 export const RPC_URL = "https://soroban-testnet.stellar.org";
 export const NETWORK_PASSPHRASE = Networks.TESTNET;
-export const CONTRACT_ID = "CDWIKLV3ZZ2JVBFVFKD37TMALWOSBHE5J2HK6E2D33EZ7VPQLQ3KCNNQ";
+export const CONTRACT_ID = "CCHIPLUPXYSZQXYMHDRFGOL2DNUQ6OSXZHLSLFOBOJE52VIAQ75H5AJS";
 
 export const server = new rpc.Server(RPC_URL);
 export const contract = new Contract(CONTRACT_ID);
@@ -114,7 +114,7 @@ export async function listForSaleOnChain(
           "list_for_sale",
           hexToBytes32(hash),
           nativeToScVal(seller, { type: "address" }),
-          nativeToScVal(BigInt(Math.round(price * 10000000)), { type: "u128" }),
+          nativeToScVal(BigInt(Math.round(price * 10000)), { type: "u128" }),
           nativeToScVal(Math.floor(Date.now() / 1000), { type: "u128" })
         )
     )
@@ -207,7 +207,7 @@ export async function placeBidOnChain(
           "place_bid",
           hexToBytes32(hash),
           nativeToScVal(bidder, { type: "address" }),
-          nativeToScVal(BigInt(Math.round(amount * 10000000)), { type: "u128" }),
+          nativeToScVal(BigInt(Math.round(amount * 10000)), { type: "u128" }),
           nativeToScVal(BigInt(Date.now()), { type: "u128" })
         )
       )

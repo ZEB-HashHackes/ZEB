@@ -1,180 +1,182 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import Navbar from '../../components/layout/Navbar';
-import { useWallet } from '../../providers/WalletProvider';
-import { useAuth } from '../../providers/AuthProvider';
+import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Wallet, User, CheckCircle, Loader2, ArrowRight } from 'lucide-react';
+import { Wallet, User, Lock, ArrowRight, ShieldCheck, Globe } from 'lucide-react';
+
+interface FormData {
+  username: string;
+  password: string;
+}
 
 export default function SignupPage() {
-  const { wallet, connectWallet, isConnecting } = useWallet();
-  const { login, isAuthenticated } = useAuth();
   const router = useRouter();
-
-  const [username, setUsername] = useState('');
-  const [step, setStep] = useState(1);
+  const [formData, setFormData] = useState<FormData>({
+    username: '',
+    password: '',
+  });
+  const [walletConnected, setWalletConnected] = useState(false);
+  const [publicKey, setPublicKey] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/dashboard');
-    }
-  }, [isAuthenticated, router]);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
 
-  useEffect(() => {
-    if (wallet && step === 1) {
-      checkUserExists(wallet.address);
-    }
-  }, [wallet, step]);
-
-  const checkUserExists = async (address: string) => {
+  const handleWalletConnect = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/users/check/${address}`);
-      const data = await res.json();
-      if (data.exists) {
-        setError('Wallet already registered. Please login instead.');
+      const { isConnected, requestAccess, getAddress } = await import('@stellar/freighter-api');
+      
+      const connectedStatus = await isConnected();
+      if (connectedStatus && connectedStatus.isConnected) {
+        const access = await requestAccess();
+        if (access && access.error) {
+          alert(`Access denied: ${access.error}`);
+          return;
+        }
+
+        const publicKeyResult = await getAddress();
+        if (publicKeyResult && publicKeyResult.address) {
+          setPublicKey(publicKeyResult.address);
+          setWalletConnected(true);
+        } else {
+          alert('Failed to get wallet address.');
+        }
       } else {
-        setStep(2);
+        alert('Freighter wallet not found or not connected. Please install the extension.');
       }
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error('Wallet connection error:', error);
+      alert('Error connecting to Freighter wallet.');
     }
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !wallet) return;
+    if (!publicKey) {
+      alert('Please connect your wallet first!');
+      return;
+    }
 
     setLoading(true);
-    setError('');
-
     try {
-      const res = await fetch('http://localhost:5000/api/users/register', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/register`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          username, 
-          publickey: wallet.address 
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password,
+          publickey: publicKey,
         }),
       });
 
-      const data = await res.json();
-      if (data.status === 'ok') {
-        login(data.data);
-        setStep(3);
-        setTimeout(() => router.push('/dashboard'), 2000);
+      const data = await response.json();
+
+      if (response.ok) {
+        // Persist session locally
+        localStorage.setItem('zeb_user_address', publicKey);
+        localStorage.setItem('zeb_username', formData.username);
+        
+        alert('Signup successful! Redirecting to dashboard...');
+        router.push('/dashboard');
       } else {
-        setError(data.message || 'Signup failed');
+        alert(`Signup failed: ${data.message || 'Unknown error'}`);
       }
-    } catch (err) {
-      setError('Connection to server failed');
+    } catch (error) {
+      console.error('Signup error:', error);
+      alert('Error during signup. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-white text-slate-900">
-      <Navbar />
-      
-      <main className="pt-32 pb-20 px-6">
-        <div className="max-w-md mx-auto">
-          {/* Header */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-black tracking-tighter mb-4 uppercase">Create Account</h1>
-            <p className="text-slate-400 font-medium text-sm">Join the next generation of digital art collectors.</p>
+    <main className="min-h-screen bg-slate-50 flex items-center justify-center p-6 relative overflow-hidden">
+      {/* Background blobs */}
+      <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-cyan-100/30 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2" />
+      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-slate-200/30 blur-[100px] rounded-full translate-y-1/2 -translate-x-1/2" />
+
+      <div className="w-full max-w-[480px] relative z-10">
+        <div className="text-center mb-10">
+           <h1 className="text-5xl font-black text-slate-900 tracking-tight mb-4">Create Account</h1>
+           <p className="text-sm font-bold text-slate-400">Enter the Digital Atelier. Curate your legacy.</p>
+        </div>
+
+        <div className="bg-white rounded-[40px] border border-slate-100 shadow-2xl shadow-slate-200/50 p-12">
+          <button 
+            onClick={handleWalletConnect}
+            className={`w-full py-4 px-6 rounded-2xl flex items-center justify-center gap-3 transition-all font-black text-xs uppercase tracking-widest ${walletConnected ? 'bg-slate-50 text-slate-300 border border-slate-100' : 'bg-cyan-400 text-slate-900 hover:bg-cyan-500 shadow-lg shadow-cyan-400/20'}`}
+          >
+             <Wallet size={18} />
+             {walletConnected ? 'Wallet Connected' : 'Connect Wallet'}
+          </button>
+
+          <div className="my-10 flex items-center gap-4">
+             <div className="h-px bg-slate-100 flex-1" />
+             <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Or use credentials</span>
+             <div className="h-px bg-slate-100 flex-1" />
           </div>
 
-          {/* Steps Indicator */}
-          <div className="flex justify-between mb-12 relative">
-            <div className="absolute top-1/2 left-0 w-full h-[2px] bg-slate-100 -translate-y-1/2 z-0"></div>
-            {[1, 2, 3].map((s) => (
-              <div 
-                key={s}
-                className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center font-black text-sm transition-all duration-500 ${
-                  step >= s ? 'bg-primary text-slate-900' : 'bg-white border-2 border-slate-100 text-slate-300'
-                }`}
-              >
-                {step > s ? <CheckCircle size={18} /> : s}
-              </div>
-            ))}
-          </div>
-
-          {/* Form Content */}
-          <div className="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm">
-            {step === 1 && (
-              <div className="text-center space-y-6">
-                <div className="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                  <Wallet size={32} className="text-secondary" />
+          <form onSubmit={handleSignup} className="space-y-8">
+             <div className="space-y-3">
+                <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Username</label>
+                <div className="relative">
+                   <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
+                   <input 
+                     name="username"
+                     type="text" 
+                     placeholder="e.g. curator_01" 
+                     className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pl-12 pr-4 text-xs font-bold text-slate-900 focus:outline-none focus:border-cyan-400 transition-all placeholder:text-slate-200"
+                     value={formData.username}
+                     onChange={handleChange}
+                     required
+                   />
                 </div>
-                <h2 className="text-xl font-black uppercase tracking-tight">Connect your Wallet</h2>
-                <p className="text-slate-400 text-sm">To sign up for ZEB, you must first connect your Stellar wallet via Freighter.</p>
-                {error && <p className="text-red-500 text-xs font-bold bg-red-50 p-3 rounded-lg border border-red-100">{error}</p>}
-                <button 
-                  onClick={connectWallet}
-                  disabled={isConnecting}
-                  className="w-full py-4 bg-primary text-slate-900 font-black uppercase tracking-widest rounded-2xl hover:scale-[1.02] transition-all disabled:opacity-50 flex items-center justify-center gap-3"
-                >
-                  {isConnecting ? <Loader2 className="animate-spin" /> : <Wallet size={20} />}
-                  {isConnecting ? 'Connecting...' : 'Connect Freighter'}
-                </button>
-              </div>
-            )}
+             </div>
 
-            {step === 2 && (
-              <form onSubmit={handleSignup} className="space-y-6">
-                <div className="text-center mb-8">
-                  <div className="w-16 h-16 bg-cyan-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <User size={28} className="text-cyan-500" />
-                  </div>
-                  <h2 className="text-xl font-black uppercase tracking-tight">Choose Username</h2>
+             <div className="space-y-3">
+                <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Password</label>
+                <div className="relative">
+                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
+                   <input 
+                     name="password"
+                     type="password" 
+                     placeholder="••••••••••••" 
+                     className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pl-12 pr-4 text-xs font-bold text-slate-900 focus:outline-none focus:border-cyan-400 transition-all placeholder:text-slate-200"
+                     value={formData.password}
+                     onChange={handleChange}
+                     required
+                   />
                 </div>
-                
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Unique Username</label>
-                  <input 
-                    type="text" 
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Enter your handle..."
-                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:border-cyan-400 transition-all font-bold"
-                    required
-                  />
-                </div>
+             </div>
 
-                {error && <p className="text-red-500 text-xs font-bold bg-red-50 p-3 rounded-lg border border-red-100">{error}</p>}
+             <button 
+               type="submit"
+               disabled={loading}
+               className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-sm hover:bg-slate-800 transition-all shadow-xl shadow-slate-200"
+             >
+                {loading ? 'Creating...' : 'Sign Up'}
+             </button>
+          </form>
 
-                <button 
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-4 bg-primary text-slate-900 font-black uppercase tracking-widest rounded-2xl hover:scale-[1.02] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {loading ? <Loader2 className="animate-spin" /> : 'Finalize Signup'}
-                  {!loading && <ArrowRight size={20} />}
-                </button>
-              </form>
-            )}
-
-            {step === 3 && (
-              <div className="text-center py-10 space-y-6">
-                <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6 scale-125">
-                  <CheckCircle size={40} className="text-green-500" />
-                </div>
-                <h2 className="text-2xl font-black uppercase tracking-tight">Welcome, {username}!</h2>
-                <p className="text-slate-400 text-sm">Your account has been successfully created. Redirecting to your dashboard...</p>
-              </div>
-            )}
-          </div>
-
-          <div className="text-center mt-8">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-              Already have an account? <a href="/login" className="text-cyan-500 hover:underline">Login with wallet</a>
-            </p>
+          <div className="mt-10 text-center">
+             <p className="text-xs font-bold text-slate-400">
+                Already part of the atelier? <Link href="/login" className="text-cyan-500 hover:text-cyan-600 transition-colors">Log In</Link>
+             </p>
           </div>
         </div>
-      </main>
-    </div>
+
+        <div className="mt-12 text-center text-[10px] font-bold text-slate-300 uppercase tracking-widest leading-relaxed">
+           By creating an account, you agree to Aetheris' <br/>
+           <span className="text-slate-400 hover:text-slate-900 cursor-pointer">Terms of Service</span> and <span className="text-slate-400 hover:text-slate-900 cursor-pointer">Privacy Policy</span>
+        </div>
+      </div>
+    </main>
   );
 }
