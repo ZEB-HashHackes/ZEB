@@ -45,7 +45,9 @@ pub enum ZebError {
     ArtworkNotFound = 2,
     NotOwner = 3,
     InvalidOffer = 4,
-    InvalidAuction = 5,
-    ArtworkAlreadyListed = 6,
-    ListingNotFound = 7,
+    AuctionNotFound = 5,
+    InvalidAuction = 6 ,
+    InvalidTime = 7, 
+    ArtworkAlreadyListed = 8,
+    ListingNotFound = 9,
 }

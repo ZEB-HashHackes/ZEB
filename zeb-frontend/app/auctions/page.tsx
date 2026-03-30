@@ -4,28 +4,32 @@ import React, { useState, useMemo } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import ArtCard from '@/components/marketplace/ArtCard';
-import { ChevronLeft, ChevronRight, ChevronDown, Search, X, Users } from 'lucide-react';
-
-const auctions = [
-  { id: 1, title: 'Ethereal Pulse #04', creator: '@Arthemus_Design', price: '2.45 ETH', timer: '04h 12m', saleType: 'bid', category: 'image', bidders: 12, hash: 'pulse-04', image: 'https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=800&auto=format&fit=crop' },
-  { id: 3, title: 'Cyber Nomad G7', creator: '@Future_Studio', price: '12.20 ETH', timer: '12h 05m', saleType: 'bid', category: 'video', bidders: 45, hash: 'nomad-g7', image: 'https://images.unsplash.com/photo-1633167606207-d840b5070fc2?w=800&auto=format&fit=crop' },
-  { id: 6, title: 'Nocturnal Muse', creator: '@Classical_Remix', price: '5.88 ETH', timer: '01h 45m', saleType: 'bid', category: 'image', bidders: 8, hash: 'muse-v1', image: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=800&auto=format&fit=crop' },
-  { id: 9, title: 'Prism Fragment', creator: '@Macro_Gen', price: '3.40 ETH', timer: '08h 22m', saleType: 'bid', category: 'text', bidders: 18, hash: 'prism-09', image: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&auto=format&fit=crop' },
-];
+import { ChevronLeft, ChevronRight, ChevronDown, Search, Loader2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { getAuctions } from '@/lib/api';
+import { formatTimeLeft } from '@/lib/utils';
 
 export default function AuctionsPage() {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   
+  const { data: auctionsRes, isLoading, error } = useQuery({
+    queryKey: ['auctions'],
+    queryFn: getAuctions
+  });
+
+  const auctions = auctionsRes?.data || [];
   const categories = ['all', 'image', 'video', 'text', 'music'];
 
   const filteredAuctions = useMemo(() => {
-    return auctions.filter(art => {
-      const matchesSearch = art.creator.toLowerCase().includes(search.toLowerCase());
+    return auctions.filter(auction => {
+      const art = auction.artwork;
+      if (!art) return false;
+      const matchesSearch = art.creatorBy.toLowerCase().includes(search.toLowerCase());
       const matchesCategory = activeCategory === 'all' || art.category === activeCategory;
       return matchesSearch && matchesCategory;
     });
-  }, [search, activeCategory]);
+  }, [auctions, search, activeCategory]);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
@@ -81,22 +85,34 @@ export default function AuctionsPage() {
            </div>
         </div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {filteredAuctions.map((art) => (
-            <ArtCard 
-               key={art.id}
-               title={art.title}
-               creator={art.creator}
-               price={art.price}
-               timer={art.timer}
-               saleType={art.saleType as any}
-               image={art.image}
-               hash={art.hash}
-               bidders={art.bidders}
-            />
-          ))}
-        </div>
+        {/* Grid or Status States */}
+        {isLoading ? (
+           <div className="py-32 flex flex-col items-center justify-center gap-4">
+              <Loader2 className="w-12 h-12 text-cyan-400 animate-spin" />
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Loading live auctions...</p>
+           </div>
+        ) : error ? (
+           <div className="py-32 text-center">
+              <h3 className="text-xl font-black text-red-500 mb-2">Error loading auctions</h3>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Please check the backend connection.</p>
+           </div>
+        ) : (
+           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+             {filteredAuctions.map((auction) => (
+               <ArtCard 
+                  key={auction._id}
+                  title={auction.artwork.title}
+                  creator={`@${auction.artwork.creatorBy.slice(0, 8)}...`}
+                  price={`${auction.highest_bid || auction.artwork.minPrice} XLM`}
+                  timer={formatTimeLeft(new Date(auction.end_time))}
+                  saleType="bid"
+                  image={`${process.env.NEXT_PUBLIC_BACKEND_URL?.replace('/api', '')}/${auction.artwork.filePath}`}
+                  hash={auction.art_hash}
+                  bidders={auction.bidders.length}
+               />
+             ))}
+           </div>
+        )}
 
         {filteredAuctions.length === 0 && (
            <div className="py-32 text-center">

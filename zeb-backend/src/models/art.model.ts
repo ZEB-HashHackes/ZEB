@@ -27,6 +27,7 @@ export interface IArt extends Document {
   description: string;
   filePath: string;
   fileType: FileType;
+  saleType: string
   mimeType: string;
   contentHash: string;
   similarityHash?: string | null;
@@ -44,6 +45,7 @@ const artSchema: Schema<IArt> = new Schema<IArt>({
   title: {type: String, required: true, maxLength: 128},
   description: {type: String, maxLength: 512},
   filePath: {type: String, required: true},
+  saleType: {type: String, enum: ["sell", "auction"]},
   fileType: {type: String, enum: Object.values(FileType), required: true},
   mimeType: {type: String, required: true},
   contentHash: {type: String, required: true, unique: true},

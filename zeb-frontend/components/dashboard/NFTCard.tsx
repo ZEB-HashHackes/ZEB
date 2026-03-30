@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Clock, ShieldCheck, ShoppingBag, TrendingUp } from 'lucide-react'
-const { buynow, placeBid } = await import('../../lib/stellar');
+const { buynow, placeBidOnChain } = await import('../../lib/stellar');
 
 export type Status = 'auction' | 'direct' | 'not_listed' | 'AUCTION' | 'FIXED_PRICE' | 'NOT_LISTED'
 
@@ -71,10 +71,10 @@ export default function NFTCard({
       return (
         <button 
           onClick={(e) => { e.stopPropagation(); onBuy(); }}
-          className="w-full py-3 bg-primary text-background font-black rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all active:scale-95 flex items-center justify-center gap-2"
+          className="w-full py-3 bg-primary text-slate-900 font-black rounded-xl hover:bg-primary/80 transition-all active:scale-95 flex items-center justify-center gap-2"
         >
           <ShoppingBag size={18} />
-          BUY NOT
+          BUY NOW
         </button>
       )
     }
@@ -82,7 +82,7 @@ export default function NFTCard({
       return (
         <button 
           onClick={(e) => { e.stopPropagation(); onBid(); }}
-          className="w-full py-3 bg-secondary text-background font-black rounded-xl hover:shadow-lg hover:shadow-secondary/25 transition-all active:scale-95 flex items-center justify-center gap-2"
+          className="w-full py-3 bg-secondary text-white font-black rounded-xl hover:bg-slate-800 transition-all active:scale-95 flex items-center justify-center gap-2"
         >
           <TrendingUp size={18} />
           PLACE BID
@@ -95,7 +95,7 @@ export default function NFTCard({
         return (
           <button 
             onClick={(e) => { e.stopPropagation(); onSell?.(); }}
-            className="w-full py-3 bg-gradient-to-r from-primary to-secondary text-background font-black rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all active:scale-95"
+            className="w-full py-3 bg-secondary text-white font-black rounded-xl hover:bg-slate-800 transition-all active:scale-95"
           >
             LIST FOR SALE
           </button>
@@ -115,7 +115,7 @@ export default function NFTCard({
       return (
         <button 
           onClick={(e) => { e.stopPropagation(); onViewAuction?.(); }}
-          className="w-full py-3 bg-secondary text-background font-black rounded-xl hover:shadow-lg hover:shadow-secondary/25 transition-all active:scale-95"
+          className="w-full py-3 bg-secondary text-white font-black rounded-xl hover:bg-slate-800 transition-all active:scale-95"
         >
           VIEW AUCTION
         </button>
@@ -137,7 +137,7 @@ export default function NFTCard({
       onClick={onCardClick}
       className="group relative bg-surface/30 backdrop-blur-xl rounded-[32px] p-6 border border-surface/50 hover:border-primary/50 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/5 cursor-pointer flex flex-col h-full overflow-hidden"
     >
-      <div className="relative rounded-2xl overflow-hidden mb-6 aspect-video bg-gradient-to-br from-muted/50 to-transparent">
+      <div className="relative rounded-2xl overflow-hidden mb-6 aspect-video bg-surface">
         <Image 
           src={image} 
           alt={title}

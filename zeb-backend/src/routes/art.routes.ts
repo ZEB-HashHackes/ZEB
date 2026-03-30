@@ -25,6 +25,7 @@ router.post("/", upload.single("file"), async (req, res) => {
     const {
       title,
       description,
+      saleType,
       creatorBy,
       ownedBy,
       category = "image",
@@ -96,6 +97,7 @@ router.post("/", upload.single("file"), async (req, res) => {
       description,
       filePath: serviceFilePath,
       fileType,
+      saleType,
       mimeType,
       contentHash,
       similarityHash,
@@ -199,7 +201,16 @@ router.get("/hash/:hash", async (req, res) => {
 // GET all artworks (Marketplace)
 router.get("/", async (req, res) => {
   try {
-    const arts = await Art.find({ status: ArtStatus.ACTIVE }).sort({ createdAt: -1 });
+    const { sort = 'createdAt', order = 'desc', limit = '0' } = req.query;
+    
+    const sortField = sort as string;
+    const sortOrder = order === 'desc' ? -1 : 1;
+    const limitCount = parseInt(limit as string);
+
+    const arts = await Art.find({ status: ArtStatus.ACTIVE })
+      .sort({ [sortField]: sortOrder })
+      .limit(limitCount);
+
     res.status(200).json({ status: "ok", data: arts });
   } catch (err) {
     res.status(500).json({ status: "error", message: "Error fetching artworks" });

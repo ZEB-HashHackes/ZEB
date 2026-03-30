@@ -109,7 +109,7 @@ export default function ArtGrid({ filter, title, emptyMessage, showMarketActions
           <p className="text-xl text-foreground/50 max-w-md mx-auto leading-relaxed">{emptyMessage}</p>
           <Link
             href="/dashboard/upload"
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-secondary text-background px-8 py-4 rounded-2xl font-black hover:shadow-2xl hover:shadow-primary/30 transition-all transform hover:-translate-y-1 active:scale-95"
+            className="inline-flex items-center gap-2 bg-primary text-slate-900 px-8 py-4 rounded-2xl font-black hover:bg-primary/80 transition-all transform hover:-translate-y-1 active:scale-95"
           >
             Upload Artwork
           </Link>

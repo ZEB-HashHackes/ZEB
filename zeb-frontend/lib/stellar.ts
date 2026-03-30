@@ -170,7 +170,7 @@ export async function createAuctionOnChain(
 }
 
 
-export async function placeBid(
+export async function placeBidOnChain(
   hash: string,
   bidder: string,
   amount: number
@@ -188,7 +188,7 @@ export async function placeBid(
           "place_bid",
           hexToBytes32(hash),
           nativeToScVal(bidder, { type: "address" }),
-          nativeToScVal(BigInt(amount), { type: "u128" }),
+          nativeToScVal(BigInt(Math.round(amount * 10000000)), { type: "u128" }),
           nativeToScVal(BigInt(Date.now()), { type: "u128" })
         )
       )
@@ -213,6 +213,51 @@ export async function placeBid(
     return res.hash;
   } catch (err) {
     console.error("placeBid error:", err);
+    throw err;
+  }
+}
+
+export async function closeAuctionOnChain(
+  hash: string,
+  caller: string
+) {
+  try {
+    const { signTransaction } = await import("@stellar/freighter-api");
+    const account = await server.getAccount(caller);
+
+    const tx = new TransactionBuilder(account, {
+      fee: "100000",
+      networkPassphrase: NETWORK_PASSPHRASE,
+    })
+      .addOperation(
+        contract.call(
+          "close_auction",
+          hexToBytes32(hash),
+          nativeToScVal(caller, { type: "address" }),
+          nativeToScVal(BigInt(Date.now()), { type: "u128" })
+        )
+      )
+      .setTimeout(60)
+      .build();
+
+    const prepared = await server.prepareTransaction(tx);
+
+    const signed = await signTransaction(prepared.toXDR(), {
+      networkPassphrase: NETWORK_PASSPHRASE,
+    });
+
+    const xdr =
+      (signed as any).signedXdr || (signed as any).signedTxXdr;
+
+    const signedTx = TransactionBuilder.fromXDR(
+      xdr,
+      NETWORK_PASSPHRASE
+    );
+
+    const res = await server.sendTransaction(signedTx);
+    return res.hash;
+  } catch (err) {
+    console.error("closeAuction error:", err);
     throw err;
   }
 }

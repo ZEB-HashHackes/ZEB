@@ -7,6 +7,42 @@ import { RevenueService } from "../services/revenue.service.js";
 import { RevenueType } from "../models/revenue.model.js";
 
 const router = express.Router();
+/**
+ * GET ALL ACTIVE AUCTIONS
+ */
+router.get("/", async (req, res) => {
+  try {
+    const auctions = await Auction.aggregate([
+      {
+        $match: {
+          end_time: { $gt: new Date() }
+        }
+      },
+      {
+        $lookup: {
+          from: "arts",
+          localField: "art_hash",
+          foreignField: "contentHash",
+          as: "artwork"
+        }
+      },
+      {
+        $unwind: "$artwork"
+      },
+      {
+        $sort: { start_time: -1 }
+      }
+    ]);
+
+    return res.status(200).json({
+      status: "ok",
+      data: auctions
+    });
+  } catch (err) {
+    console.error("Error fetching auctions:", err);
+    return res.status(500).json({ status: "error", message: "error fetching auctions" });
+  }
+});
 
 router.post("/create", async (req, res) => {
   try {

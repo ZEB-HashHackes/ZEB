@@ -43,10 +43,10 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
             onClick={() => onTabChange(item.id as TabType)}
             className={`w-full flex items-center gap-4 px-5 py-3.5 rounded-2xl font-black transition-all text-xs uppercase tracking-widest
               ${activeTab === item.id 
-                ? 'bg-cyan-50/50 text-cyan-600 border border-cyan-100 shadow-sm' 
+                ? 'bg-primary/10 text-primary border border-primary/20 shadow-sm' 
                 : 'text-slate-400 hover:text-slate-900 hover:bg-slate-50 border border-transparent'}`}
           >
-            <item.icon size={18} className={activeTab === item.id ? 'text-cyan-500' : 'text-slate-300'} />
+            <item.icon size={18} className={activeTab === item.id ? 'text-primary' : 'text-slate-300'} />
             {item.label}
           </button>
         ))}
@@ -56,7 +56,7 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
             <p className="text-[9px] font-black uppercase tracking-widest text-slate-300 mb-2">Verification Status</p>
             <div className="flex items-center gap-2">
-               <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+               <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                <span className="text-[10px] font-black text-slate-900">Artist Verified</span>
             </div>
          </div>

@@ -6,14 +6,15 @@
   --color-background: #FFFFFF;
   --color-foreground: #0A0E14;
   --color-surface: #F8F9FA;
-  --color-primary: #33FFEB;
+  --color-primary: #0AC4E0;
   --color-secondary: #0A0E14;
+  --color-error: #EF4444;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 :root {
-  --background: #FFFFFF;
+  --background: rgb(255, 255, 255);
   --foreground: #0A0E14;
 }
 

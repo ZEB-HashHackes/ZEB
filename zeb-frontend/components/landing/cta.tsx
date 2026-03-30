@@ -17,7 +17,7 @@ export default function CTA() {
               Join over 10,000 artists and institutions already protecting their authorship on the ZEB network.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/signup" className="px-12 py-5 bg-cyan-400 text-slate-900 font-black rounded-2xl text-md hover:bg-cyan-500 transition-all tracking-tight shadow-xl shadow-cyan-400/20">
+              <Link href="/dashboard" className="px-12 py-5 bg-primary text-slate-900 font-black rounded-2xl text-md hover:bg-primary/80 transition-all tracking-tight">
                 Start Registering
               </Link>
             </div>

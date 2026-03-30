@@ -45,7 +45,7 @@ export default function Navbar({ showSearch = false }: { showSearch?: boolean })
                 </div>
                 <button
                   onClick={disconnectWallet}
-                  className="px-3 py-1.5 bg-red-500/10 text-red-500 text-xs font-black uppercase tracking-wide rounded-md hover:bg-red-500/20 transition-all border border-red-500/20"
+                  className="px-3 py-1.5 bg-error/10 text-error text-xs font-black uppercase tracking-wide rounded-md hover:bg-error/20 transition-all border border-error/20"
                   disabled={isConnecting}
                 >
                   Disconnect
@@ -54,7 +54,7 @@ export default function Navbar({ showSearch = false }: { showSearch?: boolean })
             ) : (
               <button
                 onClick={connectWallet}
-                className="px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-lg hover:shadow-lg hover:shadow-cyan-500/25 transition-all disabled:opacity-50"
+                className="px-6 py-2.5 bg-primary text-slate-900 text-[10px] font-black uppercase tracking-[0.2em] rounded-lg hover:bg-primary/90 transition-all disabled:opacity-50"
                 disabled={isConnecting}
               >
                 {isConnecting ? 'Connecting...' : 'Connect Wallet'}

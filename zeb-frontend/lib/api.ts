@@ -1,4 +1,4 @@
-import { Art, Activity } from './types';
+import { Art, Activity, Auction, AuctionWithArt } from './types';
 
 const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000/api';
 
@@ -14,8 +14,13 @@ export async function uploadArt(formData: FormData) {
   return data;
 }
 
-export async function getArts(): Promise<{ data: Art[] }> {
-  const res = await fetch(`${API_BASE}/arts`);
+export async function getArts(params?: { sort?: string; order?: 'asc' | 'desc'; limit?: number }): Promise<{ data: Art[] }> {
+  const query = new URLSearchParams();
+  if (params?.sort) query.set('sort', params.sort);
+  if (params?.order) query.set('order', params.order);
+  if (params?.limit) query.set('limit', params.limit.toString());
+  
+  const res = await fetch(`${API_BASE}/arts?${query.toString()}`);
   if (!res.ok) throw new Error('Failed to fetch arts');
   return res.json();
 }
@@ -51,11 +56,21 @@ export async function getListings() {
   return { data: [] as Art[] };
 }
 
-// Auctions reverted to static mock data only (removed real-time fetch)
-// getAuctions removed - no backend /auction/active endpoint exists
+export async function getAuctions(): Promise<{ data: AuctionWithArt[] }> {
+  const res = await fetch(`${API_BASE}/auction`);
+  if (!res.ok) throw new Error('Failed to fetch auctions');
+  return res.json();
+}
 
-export async function getSellerAuctions(seller: string) {
-  return { data: [] as Art[] };
+export async function getAuctionByArtHash(hash: string): Promise<{ data: Auction }> {
+  const res = await fetch(`${API_BASE}/auction/art/${hash}`);
+  if (!res.ok) throw new Error('Failed to fetch auction details');
+  return res.json();
+}
+
+export async function getSellerAuctions(seller: string): Promise<{ data: AuctionWithArt[] }> {
+  // Placeholder - could be implemented in backend if needed
+  return { data: [] };
 }
 
 // Fixed price listing TODO

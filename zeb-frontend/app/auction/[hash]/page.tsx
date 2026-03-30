@@ -5,10 +5,10 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Clock, ShieldCheck, User, Loader2, AlertCircle, Gavel } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getArtById, getArtActivity } from '@/lib/api';
+import { getArtById, getArtActivity, getAuctionByArtHash } from '@/lib/api';
 import { placeBidOnChain, closeAuctionOnChain } from '@/lib/stellar';
 import { useWallet } from '@/providers/WalletProvider';
-import { formatDistanceToNow } from '@/lib/utils';
+import { formatDistanceToNow, formatTimeLeft } from '@/lib/utils';
 
 export default function AuctionDetailPage({
   params,
@@ -21,13 +21,20 @@ export default function AuctionDetailPage({
   const [bidAmount, setBidAmount] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // 1. Fetch Art/Auction Details
+  // 1. Fetch Art Details
   const { data: artRes, isLoading: artLoading, error: artError } = useQuery({
     queryKey: ['art', artId],
     queryFn: () => getArtById(artId),
   });
 
-  // 2. Fetch Bidding History (Filtered from Activities)
+  // 2. Fetch Auction Specifics (Highest bid, end time)
+  const { data: auctionRes, isLoading: auctionLoading } = useQuery({
+    queryKey: ['auction', artId],
+    queryFn: () => getAuctionByArtHash(artId),
+    enabled: !!artRes,
+  });
+
+  // 3. Fetch Bidding History (Filtered from Activities)
   const { data: activityRes, isLoading: activityLoading } = useQuery({
     queryKey: ['activity', artId],
     queryFn: () => getArtActivity(artId),
@@ -35,9 +42,13 @@ export default function AuctionDetailPage({
   });
 
   const art = artRes?.data;
+  const auction = auctionRes?.data;
   const bids = (activityRes?.data || []).filter(a => a.type === 'bid');
-  const highestBid = bids.length > 0 ? (bids[0].amount || 0) : (art?.minPrice || 0);
-  const highestBidder = bids.length > 0 ? (bids[0].from || null) : null;
+  
+  // Use auction model for values, fallback to art minPrice
+  const highestBid = auction ? auction.highest_bid : (art?.minPrice || 0);
+  const highestBidder = auction?.highest_bidder || null;
+  const endTime = auction?.end_time ? new Date(auction.end_time) : null;
 
   // 3. Bid Logic
   const handleBid = async () => {
@@ -57,6 +68,7 @@ export default function AuctionDetailPage({
       alert("Bid placed successfully!");
       setBidAmount('');
       queryClient.invalidateQueries({ queryKey: ['art', artId] });
+      queryClient.invalidateQueries({ queryKey: ['auction', artId] });
       queryClient.invalidateQueries({ queryKey: ['activity', artId] });
     } catch (err: any) {
       alert(err.message || "Bidding failed");
@@ -147,10 +159,12 @@ export default function AuctionDetailPage({
                      </div>
                   </div>
                   <div className="text-right">
-                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-4">Ends</p>
+                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-4">Ends In</p>
                      <div className="flex items-center gap-1.5 text-slate-900 justify-end">
                         <Clock size={16} />
-                        <span className="text-xl font-black">24H+</span>
+                        <span className="text-xl font-black">
+                           {endTime ? formatTimeLeft(endTime) : 'N/A'}
+                        </span>
                      </div>
                   </div>
                </div>
@@ -182,7 +196,7 @@ export default function AuctionDetailPage({
                         } catch (err: any) { alert(err.message); }
                         finally { setIsProcessing(false); }
                       }}
-                      className="w-full py-5 bg-slate-900 text-white font-black rounded-3xl text-sm hover:bg-slate-800 transition-all tracking-tight shadow-xl shadow-slate-900/20 flex justify-center items-center"
+                      className="w-full py-5 bg-secondary text-white font-black rounded-3xl text-sm hover:bg-slate-800 transition-all tracking-tight flex justify-center items-center"
                     >
                       {isProcessing ? <Loader2 className="animate-spin mr-2" size={18} /> : "Close Auction"}
                     </button>
@@ -205,7 +219,7 @@ export default function AuctionDetailPage({
                       <button 
                         onClick={handleBid}
                         disabled={isProcessing}
-                        className="w-full py-5 bg-cyan-400 text-slate-900 font-black rounded-3xl text-sm hover:bg-cyan-500 transition-all tracking-tight shadow-xl shadow-cyan-400/20 flex justify-center items-center"
+                        className="w-full py-5 bg-primary text-slate-900 font-black rounded-3xl text-sm hover:bg-primary/80 transition-all tracking-tight flex justify-center items-center"
                       >
                          {isProcessing ? <Loader2 className="animate-spin mr-2" size={18} /> : "Place Bid"}
                       </button>

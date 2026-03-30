@@ -3,6 +3,7 @@ export interface Art {
   title: string;
   description: string;
   contentHash: string;
+  saleType: string
   similarityHash?: string;
   filePath: string;
   fileType: string;
@@ -12,7 +13,7 @@ export interface Art {
   category: string;
   minPrice: number;
   listingStatus?: 'NOT_LISTED' | 'AUCTION' | 'FIXED_PRICE';
-  listingType?: 'fixed' | 'auction';
+  listingType?: 'sell' | 'auction';
   fixedPrice?: number;
   startingPrice?: number;
   auctionEndTime?: number;
@@ -20,8 +21,20 @@ export interface Art {
   updatedAt: string;
 }
 
-// Auction interfaces removed - reverted to static/mock data only
-// AuctionWithArt and Auction removed
+export interface Auction {
+  _id: string;
+  art_hash: string;
+  seller: string;
+  highest_bidder: string;
+  highest_bid: number;
+  start_time: string;
+  end_time: string;
+  bidders: string[];
+}
+
+export interface AuctionWithArt extends Auction {
+  artwork: Art;
+}
 
 export interface Listing {
   artworkHash: string;

@@ -41,7 +41,7 @@ export default function Footer({ hideCTA = false }: { hideCTA?: boolean }) {
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-300">© 2024 ZEB. PERMANENT PROOF OF DIGITAL AUTHORSHIP.</p>
           <div className="flex items-center gap-6">
              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">Status: Stable</span>
              </div>
           </div>
