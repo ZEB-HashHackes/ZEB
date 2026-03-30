@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshProfile = async () => {
     if (!wallet?.address) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/users/profile/${wallet.address}`);
+      const res = await fetch(`https://zeb-1.onrender.com/api/users/profile/${wallet.address}`);
       const data = await res.json();
       if (data.status === 'ok') {
         login(data.data);

@@ -31,7 +31,7 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const res = await fetch('http://localhost:5000/api/users/login-wallet', {
+      const res = await fetch('https://zeb-1.onrender.com/api/users/login-wallet', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ publickey: wallet.address }),

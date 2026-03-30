@@ -139,7 +139,7 @@ export default function Dashboard() {
                                <div className="flex items-center gap-3">
                                   <div className="w-12 h-12 rounded-lg bg-surface border border-slate-100 overflow-hidden relative">
                                      <img 
-                                      src={`http://localhost:5000/${art.filePath}`} 
+                                      src={`https://zeb-1.onrender.com/${art.filePath}`} 
                                       alt="Flagged" 
                                       className="w-full h-full object-cover"
                                      />

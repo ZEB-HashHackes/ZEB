@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api', // Adjusted to match the server.ts PORT
+  baseURL: 'https://zeb-1.onrender.com/api',
 });
 
 export const adminApi = {

@@ -93,7 +93,7 @@ export default function ArtworkDetailPage() {
 
   const updateEarnings = async (pkey: string, amount: number) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/users/update-earning/${pkey}`, {
+      const response = await fetch(`https://zeb-1.onrender.com/api/users/update-earning/${pkey}`, {
         method: 'PUT', // or POST depending on your route definition
         headers: {
           'Content-Type': 'application/json',
@@ -118,7 +118,7 @@ export default function ArtworkDetailPage() {
         const { address: buyerAddress } = await getAddress()
         setBuyer(buyerAddress)
 
-        const artres = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000/api'}/arts/${hash}`)
+        const artres = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'https://zeb-1.onrender.com/api'}/arts/${hash}`)
         const data = await artres.json()
 
         if (data.status === 'ok') {
@@ -148,7 +148,7 @@ export default function ArtworkDetailPage() {
     </div>
   )
 
-  const imageUrl = art.fileType === "image" ? `${(process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000/api').replace('/api', '')}/${art.filePath}` : ""
+  const imageUrl = art.fileType === "image" ? `${(process.env.NEXT_PUBLIC_BACKEND_URL || 'https://zeb-1.onrender.com/api').replace('/api', '')}/${art.filePath}` : ""
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 font-sans">

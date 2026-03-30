@@ -108,7 +108,7 @@ export default function ListAuctionModal({ artId, isOpen, onClose, art }: ListAu
           <div className="relative aspect-video bg-surface rounded-2xl overflow-hidden border">
             <Image
               src={art.filePath.includes('uploads/') 
-                ? `http://localhost:5000/${art.filePath}`
+                ? `https://zeb-1.onrender.com/${art.filePath}`
                 : art.filePath}
               alt={art.title}
               fill

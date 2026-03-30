@@ -27,7 +27,7 @@ export default function ArtGrid({ filter, title, emptyMessage, showMarketActions
         const { address } = await getAddress()
         setUserAddress(address)
 
-        const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000/api'
+        const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://zeb-1.onrender.com/api'
         let url = `${baseUrl}/arts`
         if (filter === 'created') url = `${baseUrl}/arts/creator/${address}`
         else if (filter === 'owned') url = `${baseUrl}/arts/owner/${address}`
@@ -90,7 +90,7 @@ export default function ArtGrid({ filter, title, emptyMessage, showMarketActions
                 id={item._id}
                 title={item.title}
                 image={item.filePath.includes('uploads/') 
-                  ? `${(process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000/api').replace('/api', '')}/${item.filePath}` 
+                  ? `${(process.env.NEXT_PUBLIC_BACKEND_URL || 'https://zeb-1.onrender.com/api').replace('/api', '')}/${item.filePath}` 
                   : item.filePath}
                 status={item.listingStatus || 'NOT_LISTED'}
                 price={item.minPrice}

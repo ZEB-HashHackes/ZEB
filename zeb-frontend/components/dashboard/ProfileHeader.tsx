@@ -17,7 +17,7 @@ export default function ProfileHeader() {
         const { address: userAddr } = await getAddress();
         setAddress(userAddr);
 
-        const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000/api';
+        const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://zeb-1.onrender.com/api';
         const response = await fetch(`${baseUrl}/users/${userAddr}`);
         const result = await response.json();
 

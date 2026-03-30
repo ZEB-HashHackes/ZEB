@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '../services/api';
 
-const API_BASE_URL = 'http://localhost:5000'; // For image paths
+const API_BASE_URL = 'https://zeb-1.onrender.com'; // For image paths
 
 export function ArtworkFlags() {
   const queryClient = useQueryClient();

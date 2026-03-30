@@ -1,6 +1,6 @@
 import { Art, Activity, Auction, AuctionWithArt } from './types';
 
-const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000/api';
+const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://zeb-1.onrender.com/api';
 
 export async function uploadArt(formData: FormData) {
   const res = await fetch(`${API_BASE}/arts`, {
