@@ -53,9 +53,9 @@ export default function ActivitiesTab() {
 
   const getStatusColor = (status: Transaction['status']) => {
     switch (status) {
-      case 'completed': return 'bg-green-500/20 text-green-400 border-green-400/30'
-      case 'pending': return 'bg-yellow-500/20 text-yellow-400 border-yellow-400/30'
-      case 'failed': return 'bg-red-500/20 text-red-400 border-red-400/30'
+      case 'completed': return 'bg-green-50 text-green-600 border-green-100'
+      case 'pending': return 'bg-amber-50 text-amber-600 border-amber-100'
+      case 'failed': return 'bg-red-50 text-red-600 border-red-100'
     }
   }
 
@@ -69,8 +69,8 @@ export default function ActivitiesTab() {
               onClick={() => setActiveSubTab('all')}
               className={`flex-1 py-4 px-6 rounded-2xl font-black text-lg transition-all duration-500 ${
                 activeSubTab === 'all'
-                  ? 'bg-gradient-to-r from-primary to-secondary text-background shadow-[0_10px_30px_rgba(51,255,235,0.4)] scale-[1.02]'
-                  : 'text-foreground/60 hover:text-foreground'
+                  ? 'bg-primary text-slate-900 shadow-xl shadow-primary/20 scale-[1.02]'
+                  : 'text-slate-400 hover:text-slate-900'
               }`}
             >
               All Activity
@@ -79,8 +79,8 @@ export default function ActivitiesTab() {
               onClick={() => setActiveSubTab('purchase')}
               className={`flex-1 py-3 px-4 rounded-2xl font-black text-base transition-all duration-500 ${
                 activeSubTab === 'purchase'
-                  ? 'bg-gradient-to-r from-primary to-secondary text-background shadow-[0_10px_30px_rgba(51,255,235,0.4)] scale-[1.02]'
-                  : 'text-foreground/60 hover:text-foreground'
+                  ? 'bg-primary text-slate-900 shadow-xl shadow-primary/20 scale-[1.02]'
+                  : 'text-slate-400 hover:text-slate-900'
               }`}
             >
               Purchases
@@ -89,8 +89,8 @@ export default function ActivitiesTab() {
               onClick={() => setActiveSubTab('sale')}
               className={`flex-1 py-3 px-4 rounded-2xl font-black text-base transition-all duration-500 ${
                 activeSubTab === 'sale'
-                  ? 'bg-gradient-to-r from-primary to-secondary text-background shadow-[0_10px_30px_rgba(51,255,235,0.4)] scale-[1.02]'
-                  : 'text-foreground/60 hover:text-foreground'
+                  ? 'bg-primary text-slate-900 shadow-xl shadow-primary/20 scale-[1.02]'
+                  : 'text-slate-400 hover:text-slate-900'
               }`}
             >
               Sales
@@ -99,8 +99,8 @@ export default function ActivitiesTab() {
               onClick={() => setActiveSubTab('bid')}
               className={`flex-1 py-3 px-4 rounded-2xl font-black text-base transition-all duration-500 ${
                 activeSubTab === 'bid'
-                  ? 'bg-gradient-to-r from-primary to-secondary text-background shadow-[0_10px_30px_rgba(51,255,235,0.4)] scale-[1.02]'
-                  : 'text-foreground/60 hover:text-foreground'
+                  ? 'bg-primary text-slate-900 shadow-xl shadow-primary/20 scale-[1.02]'
+                  : 'text-slate-400 hover:text-slate-900'
               }`}
             >
               Bids
@@ -125,26 +125,26 @@ export default function ActivitiesTab() {
           {/* Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {filteredTransactions.map((tx) => (
-              <div key={tx.id} className="group bg-surface/70 backdrop-blur-xl border border-surface/40 rounded-2xl p-6 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/20 transition-all overflow-hidden">
+              <div className="group bg-white border border-slate-100 rounded-2xl p-6 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/5 transition-all overflow-hidden">
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="w-16 h-16 rounded-xl overflow-hidden bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center flex-shrink-0">
+                  <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0">
                     <img src={tx.nftImg} alt={tx.nftTitle} className="w-12 h-12 object-cover rounded-lg" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       {getIcon(tx.type)}
-                      <span className="font-bold text-sm uppercase tracking-wide text-primary">{tx.type}</span>
+                      <span className="font-black text-[10px] uppercase tracking-widest text-primary">{tx.type}</span>
                     </div>
-                    <h3 className="font-black text-lg leading-tight group-hover:text-primary transition-colors">{tx.nftTitle}</h3>
-                    <p className="text-sm text-foreground/70 truncate">{tx.counterparty}</p>
+                    <h3 className="font-black text-lg leading-tight text-slate-900 group-hover:text-primary transition-colors uppercase">{tx.nftTitle}</h3>
+                    <p className="text-[11px] font-bold text-slate-400 truncate tracking-tight">{tx.counterparty}</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between mb-4">
-                  <div className="text-2xl font-black bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                  <div className="text-2xl font-black text-slate-900">
                     {tx.amount}
                   </div>
-                  <div className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(tx.status)}`}>
-                    {tx.status === 'completed' ? 'Completed' : tx.status === 'pending' ? 'Pending' : 'Failed'}
+                  <div className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${getStatusColor(tx.status)}`}>
+                    {tx.status}
                   </div>
                 </div>
                 <div className="flex items-center justify-between text-sm text-foreground/60">
@@ -162,7 +162,7 @@ export default function ActivitiesTab() {
                 <h3 className="text-2xl font-black mb-4 text-foreground/70">No Recent Activity</h3>
                 <p className="text-xl mb-8 max-w-md mx-auto leading-relaxed">Your transaction history will appear here. Make your first purchase, sale, or bid!</p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-                  <Link href="/market" className="px-8 py-4 bg-gradient-to-r from-primary to-secondary text-background font-bold rounded-2xl hover:shadow-2xl hover:shadow-primary/30 transition-all text-lg">
+                  <Link href="/market" className="px-8 py-4 bg-secondary text-white font-black rounded-2xl hover:bg-slate-800 hover:shadow-xl transition-all shadow-lg text-sm tracking-widest uppercase">
                     Browse Marketplace
                   </Link>
                 </div>

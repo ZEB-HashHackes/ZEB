@@ -115,8 +115,8 @@ export default function NFTsTab() {
               onClick={() => setActiveTab('owned')}
               className={`flex-1 py-4 px-6 rounded-2xl font-black text-lg transition-all duration-500 ${
                 activeTab === 'owned'
-                  ? 'bg-gradient-to-r from-primary to-secondary text-background shadow-[0_10px_30px_rgba(51,255,235,0.4)] scale-[1.02]'
-                  : 'text-foreground/60 hover:text-foreground'
+                  ? 'bg-primary text-slate-900 shadow-xl shadow-primary/20 scale-[1.02]'
+                  : 'text-slate-400 hover:text-slate-900'
               }`}
             >
               My NFTs
@@ -125,8 +125,8 @@ export default function NFTsTab() {
               onClick={() => setActiveTab('created')}
               className={`flex-1 py-3 px-4 rounded-2xl font-black text-base transition-all duration-500 ${
                 activeTab === 'created'
-                  ? 'bg-gradient-to-r from-primary to-secondary text-background shadow-[0_10px_30px_rgba(51,255,235,0.4)] scale-[1.02]'
-                  : 'text-foreground/60 hover:text-foreground'
+                  ? 'bg-primary text-slate-900 shadow-xl shadow-primary/20 scale-[1.02]'
+                  : 'text-slate-400 hover:text-slate-900'
               }`}
             >
               Created
@@ -135,8 +135,8 @@ export default function NFTsTab() {
               onClick={() => setActiveTab('listings')}
               className={`flex-1 py-3 px-4 rounded-2xl font-black text-base transition-all duration-500 ${
                 activeTab === 'listings'
-                  ? 'bg-gradient-to-r from-primary to-secondary text-background shadow-[0_10px_30px_rgba(51,255,235,0.4)] scale-[1.02]'
-                  : 'text-foreground/60 hover:text-foreground'
+                  ? 'bg-primary text-slate-900 shadow-xl shadow-primary/20 scale-[1.02]'
+                  : 'text-slate-400 hover:text-slate-900'
               }`}
             >
               Listings
@@ -252,8 +252,8 @@ export default function NFTsTab() {
                 <h3 className="text-2xl font-black mb-4 text-foreground/70">{activeTab === 'owned' ? 'Empty Collection' : activeTab === 'created' ? 'Nothing Created' : 'Nothing Selling'}</h3>
                 <p className="text-xl mb-8 max-w-md mx-auto leading-relaxed">{emptyMessage}</p>
                 <Link 
-                  href={activeTab === 'owned' ? '/marketplace' : '/marketplace'}
-                  className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-primary to-secondary text-background font-bold rounded-2xl hover:shadow-2xl hover:shadow-primary/30 transition-all text-lg"
+                  href="/marketplace"
+                  className="inline-flex items-center gap-2 px-8 py-4 bg-secondary text-white font-black rounded-2xl hover:bg-slate-800 hover:shadow-xl transition-all shadow-lg"
                 >
                   {activeTab === 'owned' ? 'Browse Marketplace' : activeTab === 'created' ? 'Browse Marketplace' : 'Register Artwork'}
                 </Link>

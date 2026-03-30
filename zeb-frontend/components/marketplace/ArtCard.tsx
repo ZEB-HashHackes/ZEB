@@ -30,7 +30,7 @@ export default function ArtCard({
   return (
     <Link 
       href={detailRoute}
-      className="bg-white rounded-[32px] overflow-hidden border border-slate-100 transition-all duration-500 hover:border-cyan-400 group shadow-sm hover:shadow-xl flex flex-col w-full cursor-pointer"
+      className="bg-white rounded-[32px] overflow-hidden border border-slate-100 transition-all duration-500 hover:border-primary group shadow-sm hover:shadow-xl flex flex-col w-full cursor-pointer"
     >
       {/* Image Container */}
       <div className="relative aspect-square w-full overflow-hidden p-0">
@@ -41,7 +41,7 @@ export default function ArtCard({
         />
         {saleType === 'bid' && (
           <div className="absolute top-4 right-4 px-3 py-1 bg-black/40 backdrop-blur-md rounded-full flex items-center gap-1.5 border border-white/20">
-            <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
             <span className="text-[9px] font-black text-white uppercase tracking-widest">Live Auction</span>
           </div>
         )}
@@ -50,14 +50,14 @@ export default function ArtCard({
       {/* Content */}
       <div className="p-6 flex flex-col flex-grow">
         <div className="flex justify-between items-start mb-1">
-          <h3 className="text-md font-black text-slate-900 tracking-tight leading-tight group-hover:text-cyan-600 transition-colors uppercase">{title}</h3>
-          <div className="text-[10px] font-black text-slate-900 tracking-tight uppercase">{price}</div>
+          <h3 className="text-md font-black text-slate-900 tracking-tight leading-tight group-hover:text-primary transition-colors uppercase">{title}</h3>
+          <div className="text-[10px] font-black text-slate-900 tracking-tight uppercase">{price} <span className="text-slate-400">XLM</span></div>
         </div>
         
         <div className="flex justify-between items-end mt-1">
            <p className="text-[11px] text-slate-400 font-bold uppercase">by <span className="text-slate-500 font-black">{creator}</span></p>
            
-           <div className="w-8 h-8 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 group-hover:bg-cyan-400 group-hover:text-white transition-all shadow-sm">
+           <div className="w-8 h-8 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-slate-900 transition-all shadow-sm">
              <ArrowRight size={14} />
            </div>
         </div>

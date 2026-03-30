@@ -29,9 +29,9 @@ export default function ArtListingCard({
   auctionHref = `/auction/${id}`
 }: ArtListingCardProps) {
   return (
-    <div className="group relative bg-surface/50 backdrop-blur-xl rounded-3xl border border-surface/50 p-6 hover:border-primary/75 hover:shadow-2xl hover:shadow-primary/25 transition-all duration-500 overflow-hidden h-full flex flex-col">
+    <div className="group relative bg-white rounded-[32px] border border-slate-100 p-6 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/5 transition-all duration-500 overflow-hidden h-full flex flex-col">
       {/* IMAGE */}
-      <div className="relative rounded-2xl overflow-hidden mb-6 aspect-video bg-gradient-to-br from-muted/50 to-transparent group-hover:scale-[1.02] transition-transform duration-700">
+      <div className="relative rounded-2xl overflow-hidden mb-6 aspect-video bg-slate-50 group-hover:scale-[1.02] transition-transform duration-700 border border-slate-50">
         <Image 
           src={img} 
           alt={title}
@@ -39,29 +39,29 @@ export default function ArtListingCard({
           unoptimized
           className="object-cover group-hover:brightness-110 transition-all duration-700"
         />
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        {/* Subtle Overlay */}
+        <div className="absolute inset-0 bg-slate-900/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         
       </div>
       
       {/* [ Owned ]   [ On Auction ] */}
       <div className="flex gap-2 mb-4">
         {isOwned && (
-          <div className="inline-flex items-center gap-1 bg-green-500/20 border border-green-500/40 text-green-400 px-3 py-1 rounded-full text-xs font-bold">
+          <div className="inline-flex items-center gap-1.5 bg-secondary text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest leading-none">
             <ShieldCheck size={12} />
             <span>Owned</span>
           </div>
         )}
         {isOnAuction && (
-          <div className="inline-flex items-center gap-1 bg-orange-500/20 border border-orange-500/40 text-orange-400 px-3 py-1 rounded-full text-xs font-bold">
+          <div className="inline-flex items-center gap-1.5 bg-primary text-slate-900 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest leading-none">
             <Gavel size={12} />
-            <span>On Auction</span>
+            <span>Auction</span>
           </div>
         )}
       </div>
       
       {/* Digital Sunset */}
-      <h3 className="font-black text-xl mb-4">{title}</h3>
+      <h3 className="font-black text-xl mb-4 text-slate-900 uppercase tracking-tight">{title}</h3>
       
       {/* Created by / Current owner */}
       <div className="flex flex-row sm:flex-col gap-4 mb-4 text-sm text-foreground/70">
@@ -85,17 +85,15 @@ export default function ArtListingCard({
       </div> */}
       
       {/* [ View Auction ] */}
-      <div className="mt-auto pt-4 border-t border-surface/30">
+      <div className="mt-auto pt-6 border-t border-slate-100">
         <Link 
           href={auctionHref}
-          className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-secondary text-background font-bold rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all whitespace-nowrap"
+          className="inline-flex items-center justify-center w-full gap-2 px-6 py-4 bg-primary text-slate-900 font-black rounded-2xl hover:bg-primary/80 transition-all shadow-lg shadow-primary/10 uppercase text-xs tracking-widest"
         >
           View Artwork
         </Link>
       </div>
       
-      {/* Hover Shine Effect */}
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 opacity-0 group-hover:opacity-100 transition-opacity duration-700 -translate-x-full group-hover:translate-x-full" />
     </div>
   )
 }

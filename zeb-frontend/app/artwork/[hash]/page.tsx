@@ -1,281 +1,11 @@
-// 'use client'
-//
-// import React, { useState, useEffect } from 'react'
-// import Navbar from '@/components/layout/Navbar'
-// import Footer from '@/components/layout/Footer'
-// import { Clock, Info, ShoppingCart, Gavel, Sparkles } from 'lucide-react'
-// import { useParams } from 'next/navigation'
-// import {ArtCardProps} from '../../../components/marketplace/ArtCard'
-// import {ArtistCardProps} from '../../../components/marketplace/ArtistCard'
-// import { buynow, placeBid } from '../../../lib/stellar.ts'
-//
-//
-// interface ArtCardProps {
-//   image?: string
-//   title: string
-//   creator: string
-//   price: string
-//   timer?: string
-//   hash?: string
-//   createdAt?: string
-//   description?: string
-//   saleType?: 'sale' | 'bid'
-//   bidders?: number
-// }
-//
-//
-// const handleBid = async (hash: string, buyer: string, amount: number) => {
-//   try {
-//     if (!buyer) {
-//       alert('Connect wallet first')
-//       return
-//     }
-//
-//     if (!amount || amount <= 0) {
-//       alert('Enter valid bid amount')
-//       return
-//     }
-//
-//     setActionLoading(true)
-//     setMessage('Placing bid...')
-//
-//     const tx = await placeBid(hash, buyer, amount)
-//
-//     setMessage('Bid placed successfully!')
-//     console.log(tx)
-//
-//   } catch (err) {
-//     console.error(err)
-//     setMessage('Bid failed')
-//   } finally {
-//     setActionLoading(false)
-//   }
-// }
-//
-// const handleBuy = async (hash, buyer) => {
-//   try {
-//     if (!buyer) {
-//       alert('Connect wallet first')
-//       return
-//     }
-//
-//     if (!hash) {
-//       alert('Invalid artwork')
-//       return
-//     }
-//
-//     console.log('Buying:', hash, buyer)
-//
-//     const tx = await buynow(hash, buyer)
-//
-//     console.log('Transaction success:', tx)
-//
-//     // optional: refetch or update UI
-//   } catch (err) {
-//     console.error('Buy failed:', err)
-//   }
-// }
-//
-// export default function ArtworkDetailPage() {
-//   const params = useParams()
-//   const hash = params.hash as string
-//   const [art, setArt] = useState<ArtCardProps | null>(null)
-//   const [buyer, setBuyer] = useState('')
-//   const [creator , setCreator] = useState<ArtistCardProps | null>(null)
-//   const [message, setMessage] = useState('')
-//   const [bidAmount, setBidAmount] = useState(0)
-//
-//   const [loading, setLoading] = useState(true)
-//
-//
-//   useEffect(() => {
-//     const fetchData = async () => {
-//       try {
-//         setLoading(true)
-//         const { getAddress } = await import('@stellar/freighter-api');
-//         const { address: buyer } = await getAddress();
-//         setBuyer(buyer);
-//
-//         const artres = await fetch(`http://localhost:5000/api/arts/${hash}`)
-//         const data = await artres.json()
-//
-//         if (data.status === 'ok') {
-//           setArt(data.data)
-//           console.log(data.data)
-//         }
-//
-//         const creatorRes = await fetch(`http://localhost:5000/api/users/${data.data.creatorBy}`) // speling intentional
-//         const cdata = await creatorRes.json();
-//
-//         if (cdata.status === 'ok') {
-//           setCreator(cdata.data)
-//           console.log(cdata.data)
-//         }
-//
-//
-//       } catch (err) {
-//         console.error(err)
-//       } finally {
-//         setLoading(false)
-//       }
-//     }
-//
-//     fetchData()
-//   }, [hash])
-//
-//
-//
-//   if (loading) return <div className="p-10 text-center">Loading...</div>
-//   if (!art) return <div className="p-10 text-center">Not found</div>
-//
-//   // 🔥 fix image path
-//
-//  const imageUrl = art.fileType === "image"? `http://localhost:5000/${art.filePath}` : ""
-//  const creatorname = creator != null ? creator.username : art.creatorBy;
-//   return (
-//     <div className="min-h-screen flex flex-col bg-slate-50">
-//       <Navbar showSearch={true} />
-//
-//       <main className="flex-grow pt-32 pb-24 max-w-7xl mx-auto px-6 w-full">
-//         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start mb-24">
-//
-//           {/* LEFT IMAGE */}
-//           <div className="relative aspect-square w-full bg-white rounded-[48px] p-6 shadow-2xl border border-white">
-//             <img
-//               src={imageUrl || '/placeholder.png'}
-//               alt={art.title}
-//               className="w-full h-full object-cover rounded-[32px] shadow-lg"
-//             />
-//
-//             <div className="absolute top-12 left-12 z-20 px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/20 flex items-center gap-2">
-//               <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-//               <span className="text-[10px] font-black uppercase tracking-widest text-white">
-//                 Verified Asset
-//               </span>
-//             </div>
-//           </div>
-//
-//           {/* RIGHT SIDE */}
-//           <div className="flex flex-col pt-4">
-//             <h1 className="text-6xl font-black text-slate-900 tracking-tight mb-4">
-//               {art.title}
-//             </h1>
-//
-//             <div className="flex items-center gap-2 mb-8">
-//               <span className="text-sm font-bold text-slate-400">By</span>
-//               <span className="text-sm font-black text-cyan-500">
-//                 {creatorname}
-//               </span>
-//             </div>
-//
-//             {/* PRICE BOX */}
-//             <div className="bg-white p-10 rounded-[40px] border border-slate-100 shadow-xl mb-8">
-//               <div className="flex justify-between items-start mb-12">
-//                 <div>
-//                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-4">
-//                     Current Price
-//                   </p>
-//                   <span className="text-5xl font-black text-slate-900">
-//                     {art.minPrice}
-//                   </span>
-//                 </div>
-//
-//                 {art.saleType === 'bid' && (
-//                   <div className="text-right">
-//                     <p className="text-[10px] font-black uppercase text-slate-400 mb-4">
-//                       Bidders
-//                     </p>
-//                     <p className="text-xl font-black text-slate-900">
-//                       {art.bidders || 0}
-//                     </p>
-//                   </div>
-//                 )}
-//               </div>
-//
-//               {art.saleType === 'bid' && (
-//                 <div className="flex items-center gap-2 mb-10 text-slate-400">
-//                   <Clock size={16} />
-//                   <span className="text-xs font-bold">
-//                     Ends In:{' '}
-//                     <span className="text-slate-900">
-//                       {art.timer || 'N/A'}
-//                     </span>
-//                   </span>
-//                 </div>
-//               )}
-//
-//               {/* ACTIONS */}
-//
-//               <div className="flex flex-col gap-4">
-//
-//                 {art.saleType === 'sale' && (
-//                   <button
-//                     disabled={actionLoading}
-//                     onClick={() => handleBuy(art.contentHash, buyer)}
-//                     className="w-full py-5 bg-cyan-400 text-slate-900 font-black rounded-[20px]"
-//                   >
-//                     {actionLoading ? 'Processing...' : 'Buy Now'}
-//                   </button>
-//                 )}
-//
-//                 {art.saleType === 'bid' && (
-//                   <>
-//                     {/* Bid Input */}
-//                     <input
-//                       type="number"
-//                       placeholder="Enter bid amount"
-//                       value={bidAmount}
-//                       onChange={(e) => setBidAmount(Number(e.target.value))}
-//                       className="w-full p-3 border rounded-xl"
-//                     />
-//
-//                     <button
-//                       disabled={actionLoading}
-//                       onClick={() => handleBid(art.contentHash, buyer, bidAmount)}
-//                       className="w-full py-5 bg-white border border-slate-200 font-black rounded-[20px]"
-//                     >
-//                       {actionLoading ? 'Placing Bid...' : 'Place Bid'}
-//                     </button>
-//                   </>
-//                 )}
-//
-//             {/* DESCRIPTION */}
-//             {art.description && (
-//               <div className="flex items-start gap-4 p-6 bg-cyan-50 rounded-3xl border">
-//                 <Info size={20} className="text-cyan-500" />
-//                 <p className="text-[11px] font-bold text-slate-500">
-//                   {art.description}
-//                 </p>
-//               </div>
-//             )}
-//           </div>
-//         </div>
-//       </main>
-//
-//       <Footer />
-//     </div>
-//   )
-// }
-//
-//
-// To fix the syntax errors in your code, I have:
-// 1.  **Moved the `handleBid` and `handleBuy` functions inside the component.** This is necessary because they need access to component state like `setActionLoading`, `setMessage`, and `setBidAmount` (which were missing or defined outside their scope).
-// 2.  **Added the missing state variables:** `actionLoading` and `message` were used but never declared.
-// 3.  **Corrected the `ArtCardProps` redeclaration:** You had an interface and an import with the same name.
-// 4.  **Fixed the JSX nesting:** There were unclosed `div` tags and mismatched braces in the "ACTIONS" section.
-//
-// Here is the corrected code:
-//
-
 'use client'
 
 import React, { useState, useEffect } from 'react'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
-import { Clock, Info, ShoppingCart, Gavel, Sparkles } from 'lucide-react'
+import { Clock, Info, ShoppingCart, Gavel, Sparkles, Loader2 } from 'lucide-react'
 import { useParams } from 'next/navigation'
-import { ArtistCardProps } from '../../../components/marketplace/ArtistCard'
-import { buynow, placeBid } from '../../../lib/stellar'
+import { buynow, placeBidOnChain } from '../../../lib/stellar'
 
 interface ArtCardData {
   image?: string
@@ -286,7 +16,7 @@ interface ArtCardData {
   hash?: string
   createdAt?: string
   description?: string
-  saleType?: 'sale' | 'auction'
+  saleType?: 'sell' | 'auction'
   bidders?: number
   fileType?: string
   filePath?: string
@@ -305,14 +35,14 @@ export default function ArtworkDetailPage() {
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(false)
 
-  const handleBid = async (hash: string, buyer: string, amount: number) => {
+  const handleBid = async () => {
     try {
       if (!buyer) {
         alert('Connect wallet first')
         return
       }
 
-      if (!amount || amount <= 0) {
+      if (!bidAmount || bidAmount <= 0) {
         alert('Enter valid bid amount')
         return
       }
@@ -320,38 +50,41 @@ export default function ArtworkDetailPage() {
       setActionLoading(true)
       setMessage('Placing bid...')
 
-      const tx = await placeBid(hash, buyer, amount)
+      // Note: placeBidOnChain is the correct function name from lib/stellar
+      const tx = await placeBidOnChain(art?.contentHash || '', buyer, bidAmount)
 
       setMessage('Bid placed successfully!')
       console.log(tx)
-    } catch (err) {
+    } catch (err: any) {
       console.error(err)
-      setMessage('Bid failed')
+      alert(`Bid failed: ${err.message}`)
     } finally {
       setActionLoading(false)
     }
   }
 
-  const handleBuy = async (hash: string | undefined, buyer: string) => {
+  const handleBuy = async () => {
     try {
       if (!buyer) {
         alert('Connect wallet first')
         return
       }
 
-      if (!hash) {
+      if (!art?.contentHash) {
         alert('Invalid artwork')
         return
       }
 
       setActionLoading(true)
-      console.log('Buying:', hash, buyer)
+      console.log('Buying:', art.contentHash, buyer)
 
-      const tx = await buynow(hash, buyer)
+      const tx = await buynow(art.contentHash, buyer)
 
       console.log('Transaction success:', tx)
-    } catch (err) {
+      alert("Purchase successful!")
+    } catch (err: any) {
       console.error('Buy failed:', err)
+      alert(`Buy failed: ${err.message}`)
     } finally {
       setActionLoading(false)
     }
@@ -365,7 +98,7 @@ export default function ArtworkDetailPage() {
         const { address: buyerAddress } = await getAddress()
         setBuyer(buyerAddress)
 
-        const artres = await fetch(`http://localhost:5000/api/arts/${hash}`)
+        const artres = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000/api'}/arts/${hash}`)
         const data = await artres.json()
 
         if (data.status === 'ok') {
@@ -382,16 +115,26 @@ export default function ArtworkDetailPage() {
     fetchData()
   }, [hash])
 
-  if (loading) return <div className="p-10 text-center">Loading...</div>
-  if (!art) return <div className="p-10 text-center">Not found</div>
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <Loader2 className="animate-spin text-primary" size={48} />
+    </div>
+  )
+  
+  if (!art) return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
+      <h2 className="text-2xl font-black text-slate-900">Artwork Not Found</h2>
+      <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">The requested masterpiece doesn't exist.</p>
+    </div>
+  )
 
-  const imageUrl = art.fileType === "image" ? `http://localhost:5000/${art.filePath}` : ""
+  const imageUrl = art.fileType === "image" ? `${(process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000/api').replace('/api', '')}/${art.filePath}` : ""
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col bg-slate-50 font-sans">
       <Navbar showSearch={true} />
 
-      <main className="flex-grow pt-32 pb-24 max-w-7xl mx-auto px-6 w-full">
+      <main className="flex-grow pt-32 pb-24 max-w-7xl mx-auto px-6 w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start mb-24">
           
           {/* LEFT IMAGE */}
@@ -403,7 +146,7 @@ export default function ArtworkDetailPage() {
             />
 
             <div className="absolute top-12 left-12 z-20 px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/20 flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
               <span className="text-[10px] font-black uppercase tracking-widest text-white">
                 Verified Asset
               </span>
@@ -419,7 +162,7 @@ export default function ArtworkDetailPage() {
             <div className="flex items-center gap-2 mb-8">
               <span className="text-sm font-bold text-slate-400">By</span>
               <span className="text-sm font-black text-primary">
-                {art.creatorBy}
+                @{art.creatorBy?.slice(0, 8)}...
               </span>
             </div>
 
@@ -428,16 +171,16 @@ export default function ArtworkDetailPage() {
               <div className="flex justify-between items-start mb-12">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-4">
-                    Current Price
+                    {art.saleType === 'auction' ? 'MINIMUM BID' : 'FIXED PRICE'}
                   </p>
                   <span className="text-5xl font-black text-slate-900">
-                    {art.minPrice}
+                    {art.minPrice} <span className="text-lg text-slate-400">XLM</span>
                   </span>
                 </div>
 
                 {art.saleType === 'auction' && (
                   <div className="text-right">
-                    <p className="text-[10px] font-black uppercase text-slate-400 mb-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">
                       Bidders
                     </p>
                     <p className="text-xl font-black text-slate-900">
@@ -452,8 +195,8 @@ export default function ArtworkDetailPage() {
                   <Clock size={16} />
                   <span className="text-xs font-bold">
                     Ends In:{' '}
-                    <span className="text-slate-900">
-                      {art.timer || 'N/A'}
+                    <span className="text-slate-900 uppercase">
+                      {art.timer || 'TBD'}
                     </span>
                   </span>
                 </div>
@@ -461,38 +204,36 @@ export default function ArtworkDetailPage() {
 
               {/* ACTIONS */}
               <div className="flex flex-col gap-4">
-                {art.saleType == 'sell' && (
+                {art.saleType === 'sell' && (
                   <button
                     disabled={actionLoading}
-                    onClick={() => handleBuy(art.contentHash, buyer)}
-                    className="w-full py-5 bg-cyan-400 text-slate-900 font-black rounded-[20px]"
+                    onClick={handleBuy}
+                    className="w-full py-5 bg-primary text-slate-900 font-black rounded-2xl text-sm hover:bg-primary/80 transition-all active:scale-95 flex justify-center items-center gap-2"
                   >
+                    {actionLoading ? <Loader2 className="animate-spin" size={18} /> : <ShoppingCart size={18} />}
                     {actionLoading ? 'Processing...' : 'Buy Now'}
-                <button onClick={() => handleBuy(art.contentHash || '', buyer)} className="w-full py-5 bg-primary text-slate-900 font-black rounded-[20px] text-sm hover:bg-primary/80 transition-all">
-                  Buy Now
-                </button>
-
-                {art.saleType === 'bid' && (
-                  <button className="w-full py-5 bg-white border border-slate-200 text-slate-900 font-black rounded-[20px] text-sm hover:bg-slate-50 transition-all">
-                    Place Bid
                   </button>
                 )}
 
-                {art.saleType == 'auction' && (
+                {art.saleType === 'auction' && (
                   <>
-                    <input
-                      type="number"
-                      placeholder="Enter bid amount"
-                      value={bidAmount}
-                      onChange={(e) => setBidAmount(Number(e.target.value))}
-                      className="w-full p-3 border rounded-xl"
-                    />
+                    <div className="relative mb-2">
+                       <input
+                        type="number"
+                        placeholder="Enter bid amount..."
+                        value={bidAmount || ''}
+                        onChange={(e) => setBidAmount(Number(e.target.value))}
+                        className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-black text-slate-900 focus:outline-none focus:border-primary/50 transition-all"
+                      />
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300">XLM</span>
+                    </div>
 
                     <button
                       disabled={actionLoading}
-                      onClick={() => handleBid(art.contentHash || '', buyer, bidAmount)}
-                      className="w-full py-5 bg-white border border-slate-200 font-black rounded-[20px]"
+                      onClick={handleBid}
+                      className="w-full py-5 bg-secondary text-white font-black rounded-2xl text-sm hover:bg-slate-800 transition-all active:scale-95 flex justify-center items-center gap-2"
                     >
+                      {actionLoading ? <Loader2 className="animate-spin" size={18} /> : <Gavel size={18} />}
                       {actionLoading ? 'Placing Bid...' : 'Place Bid'}
                     </button>
                   </>
@@ -502,11 +243,14 @@ export default function ArtworkDetailPage() {
 
             {/* DESCRIPTION */}
             {art.description && (
-              <div className="flex items-start gap-4 p-6 bg-cyan-50 rounded-3xl border">
-                <Info size={20} className="text-cyan-500" />
-                <p className="text-[11px] font-bold text-slate-500">
-                  {art.description}
-                </p>
+              <div className="flex items-start gap-4 p-8 bg-slate-50 rounded-[40px] border border-slate-100">
+                <Info size={20} className="text-primary" />
+                <div className="flex-1">
+                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-300 mb-2">Verification Description</p>
+                   <p className="text-sm font-bold text-slate-500 leading-relaxed">
+                     {art.description}
+                   </p>
+                </div>
               </div>
             )}
           </div>
@@ -517,4 +261,3 @@ export default function ArtworkDetailPage() {
     </div>
   )
 }
-

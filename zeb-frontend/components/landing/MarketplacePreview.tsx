@@ -17,21 +17,21 @@ export default function MarketplacePreview() {
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-6">
           <div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-2">Featured Collections</h2>
-            <p className="text-xs text-slate-400 font-bold">Curated assets from the world's leading digital architects.</p>
+            <h2 className="text-4xl font-black text-slate-900 tracking-tight mb-2">Featured Collections</h2>
+            <p className="text-sm text-slate-400 font-bold uppercase tracking-widest">Curated assets from leading digital architects.</p>
           </div>
           
-          <Link href="/marketplace" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-900 hover:opacity-60 transition-opacity">
+          <Link href="/marketplace" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-900 hover:text-primary transition-colors group">
             View Marketplace
-            <ArrowRight size={14} />
+            <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
 
         <div className="min-h-[400px]">
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <Loader2 className="w-10 h-10 text-cyan-400 animate-spin" />
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Fetching curated assets...</p>
+            <div className="flex flex-col items-center justify-center py-24 gap-4">
+              <Loader2 className="w-12 h-12 text-primary animate-spin" />
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Syncing with ZEB Engine...</p>
             </div>
           ) : error ? (
             <div className="text-center py-20">

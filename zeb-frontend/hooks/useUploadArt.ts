@@ -43,22 +43,15 @@ export function useUploadArt() {
   return useMutation({
     mutationFn,
     onSuccess: (data) => {
-      console.log('✅ Full upload+onchain success:', data);
+      console.error('✅ Full upload+onchain success:', data);
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey: ['arts'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-arts'] });
     },
     onError: (error: any) => {
-      console.error('Upload+onchain failed:', error);
-      if (error.message.includes('Duplicate') || error.message.includes('Similar')) {
-        alert(error.message + '\nTip: Use existing art ID to resume.');
-      } else if (error.message.includes('Freighter') || error.message.includes('wallet')) {
-        alert('Wallet error: ' + error.message + '\nInstall/connect Freighter.');
-      } else if (error.message.includes('Transaction failed')) {
-        alert('Onchain tx failed: ' + error.message + '\nFile saved to DB; retry register manually.');
-      } else {
-        alert('Upload failed: ' + error.message);
-      }
+      console.error('❌ Upload+onchain failed:', error);
+      // Removed alerts here to allow the Modal UI to handle specific states 
+      // (e.g., Duplicates/Flagged messages).
     },
   });
 }

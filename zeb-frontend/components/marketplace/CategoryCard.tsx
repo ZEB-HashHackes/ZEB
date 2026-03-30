@@ -27,21 +27,18 @@ export default function CategoryCard({
           />
         </div>
         
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 z-10 bg-gradient-to-t from-background via-background/80 to-transparent transition-opacity duration-500 group-hover:opacity-40" />
-        
-        {/* Hover Highlight Gradient */}
-        <div className="absolute inset-0 z-10 bg-gradient-to-br from-transparent via-transparent to-transparent group-hover:from-secondary/20 group-hover:to-primary/20 transition-all duration-500" />
+        {/* Solid Overlay */}
+        <div className="absolute inset-0 z-10 bg-slate-900/60 transition-colors duration-500 group-hover:bg-slate-900/40" />
         
         {/* Content */}
         <div className="absolute inset-0 z-20 p-8 flex flex-col justify-end">
           <div className="transform transition-transform duration-500 group-hover:-translate-y-2">
-            <h3 className="text-3xl font-black text-foreground mb-2 tracking-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-primary group-hover:to-secondary transition-all">
+            <h3 className="text-4xl font-black text-white mb-2 tracking-tight group-hover:text-primary transition-colors uppercase">
               {title}
             </h3>
-            <p className="text-foreground/70 font-mono text-sm inline-flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              {count} items
+            <p className="text-white/70 font-black text-[10px] uppercase tracking-widest inline-flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              {count} Curated Pieces
             </p>
           </div>
         </div>

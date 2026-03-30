@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Clock, DollarSign, X, Image as ImageIcon } from 'lucide-react'
+import { Clock, Tag, X, Image as ImageIcon } from 'lucide-react'
 import Image from 'next/image'
 import { useCreateAuction } from '../../hooks/useCreateAuction'
 import { Art } from '../../lib/types'
@@ -23,7 +23,7 @@ const Button = ({ children, onClick, variant = 'default', className = '', disabl
   <button
     onClick={onClick}
     disabled={disabled}
-    className={`px-6 py-3 rounded-xl font-black transition-all disabled:opacity-50 disabled:cursor-not-allowed ${variant === 'outline' ? 'border border-surface text-foreground hover:bg-surface/50' : 'bg-gradient-to-r from-primary to-secondary text-background hover:shadow-lg shadow-primary/25'} ${className}`}
+    className={`px-6 py-3 rounded-xl font-black transition-all disabled:opacity-50 disabled:cursor-not-allowed ${variant === 'outline' ? 'border border-surface text-foreground hover:bg-surface/50' : 'bg-primary text-slate-900 hover:shadow-lg shadow-primary/25'} ${className}`}
   >
     {children}
   </button>
@@ -98,8 +98,8 @@ export default function ListAuctionModal({ artId, isOpen, onClose, art }: ListAu
             <Clock className="w-6 h-6 text-secondary" />
             List for Auction
           </DialogTitle>
-          <DialogDescription className="text-foreground/70">
-            Put your artwork on auction for {art.minPrice} XLM reserve. Choose duration.
+          <DialogDescription className="text-slate-400 font-bold text-sm">
+            List your masterpiece for auction with a <span className="text-secondary font-black">{art.minPrice} XLM</span> reserve price.
           </DialogDescription>
         </DialogHeader>
 
@@ -114,7 +114,7 @@ export default function ListAuctionModal({ artId, isOpen, onClose, art }: ListAu
               fill
               className="object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+            <div className="absolute inset-0 bg-slate-900/40" />
             <div className="absolute bottom-4 left-4 text-white">
               <h3 className="font-black text-xl">{art.title}</h3>
               <p className="text-sm opacity-90">Reserve: {art.minPrice} XLM</p>
@@ -152,7 +152,7 @@ export default function ListAuctionModal({ artId, isOpen, onClose, art }: ListAu
               Cancel
             </Button>
             <Button
-              className="flex-1 bg-gradient-to-r from-primary to-secondary font-black"
+              className="flex-1 bg-primary text-slate-900 font-black shadow-lg shadow-primary/10"
               onClick={handleList}
               disabled={isPending}
             >
@@ -163,7 +163,7 @@ export default function ListAuctionModal({ artId, isOpen, onClose, art }: ListAu
                 </>
               ) : (
                 <>
-                  <DollarSign className="w-4 h-4 mr-2" />
+                  <Tag className="w-4 h-4 mr-2" />
                   List Now
                 </>
               )}

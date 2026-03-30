@@ -4,6 +4,7 @@ import Activity, { ActivityType } from "../models/Activity.model.js";
 import {Types} from "mongoose";
 import multer from "multer";
 import { ArtService } from "../services/art.service.js";
+import { calculateHammingDistance } from "../utils/verification/image.js";
 import { RevenueService } from "../services/revenue.service.js";
 import { RevenueType } from "../models/revenue.model.js";
 
@@ -70,24 +71,30 @@ router.post("/", upload.single("file"), async (req, res) => {
       }
     }
 
-    // 2. Check for Similar Artworks
+    // 2. Check for Similar Artworks (Hamming Distance for Images)
     let status = ArtStatus.ACTIVE;
     if (similarityHash) {
-      const similarExisting = await Art.findOne({ similarityHash, similarityMethod });
-      if (similarExisting) {
-        if (similarExisting.creatorBy === creatorBy) {
-           // Same creator: Allow resumption
-           return res.status(200).json({
-            status: "ok",
-            message: "Similar artwork already exists for you. Resuming registration.",
-            data: {
-              artId: similarExisting._id,
-              hash: contentHash
+      // For now, simple fetch and compare (optimization: can use bitwise query in production)
+      const potentialSimilars = await Art.find({ 
+        similarityMethod, 
+        status: { $ne: ArtStatus.REJECTED } 
+      });
+
+      for (const candidate of potentialSimilars) {
+        if (candidate.similarityHash) {
+          const distance = calculateHammingDistance(similarityHash, candidate.similarityHash);
+          if (distance <= 5) { // Threshold for "Similar"
+            if (candidate.creatorBy === creatorBy) {
+              return res.status(200).json({
+                status: "ok",
+                message: "Similar artwork already exists for you. Resuming registration.",
+                data: { artId: candidate._id, hash: contentHash }
+              });
+            } else {
+              status = ArtStatus.FLAGGED;
+              break; 
             }
-          });
-        } else {
-          // Different creator: FLAG for review instead of hard block
-          status = ArtStatus.FLAGGED;
+          }
         }
       }
     }

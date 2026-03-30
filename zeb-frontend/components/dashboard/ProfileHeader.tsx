@@ -48,16 +48,16 @@ export default function ProfileHeader() {
       {/* Profile Top */}
       <div className="flex flex-col md:flex-row items-center gap-4 mb-6 bg-surface/50 backdrop-blur-xl rounded-3xl px-4 py-2 border border-surface/30 shadow-2xl">
         <div className="relative">
-          <div className="w-[60px] h-[60px] bg-gradient-to-br from-primary/30 to-secondary/30 rounded-xl flex items-center justify-center border-2 border-primary/50 shadow-xl shadow-primary/25">
+          <div className="w-[60px] h-[60px] bg-primary/10 rounded-xl flex items-center justify-center border-2 border-primary/20 shadow-xl shadow-primary/5">
              <User size={30} className="text-primary" />
           </div>
-          <div className="absolute -bottom-2 -right-2 bg-gradient-to-r from-primary to-secondary p-2 rounded-2xl shadow-lg">
-            <User size={10} className="text-background" />
+          <div className="absolute -bottom-2 -right-2 bg-secondary p-2 rounded-2xl shadow-lg border border-white/20">
+            <User size={10} className="text-white" />
           </div>
         </div>
         <div className="flex-1 text-left md:text-left">
           <div className="flex items-center gap-2 mb-2">
-            <h1 className="text-xl md:text-2xl font-black bg-gradient-to-r from-foreground via-primary to-secondary bg-clip-text text-transparent ">
+            <h1 className="text-2xl font-black text-secondary tracking-tight">
               {isLoading ? 'Loading...' : displayUser.username}
             </h1>
             <Link href="/dashboard/profile" className="ml-2 p-1.5 bg-primary/20 rounded-xl hover:bg-primary/40 transition-all group">
@@ -75,28 +75,28 @@ export default function ProfileHeader() {
       
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-18">
-        <div className="flex flex-col items-center p-2 bg-gradient-to-br from-surface/60 to-surface/30 rounded-3xl border border-surface/40 shadow-lg hover:shadow-xl hover:shadow-primary/20 transition-all group">
-          <BarChart3 size={28} className="text-primary group-hover:scale-110 transition-transform" />
-          <div className="text-lg font-black text-foreground ">{displayUser.totalNFTs}</div>
-          <p className="text-sm text-foreground/70">Total NFTs</p>
+        <div className="flex flex-col items-center p-6 bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all group">
+          <BarChart3 size={28} className="text-primary group-hover:scale-110 transition-transform mb-2" />
+          <div className="text-xl font-black text-secondary ">{displayUser.totalNFTs}</div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total NFTs</p>
         </div>
         
-        <div className="flex flex-col items-center p-2 bg-gradient-to-br from-surface/60 to-surface/30 rounded-3xl border border-surface/40 shadow-lg hover:shadow-xl hover:shadow-primary/20 transition-all group">
-          <ShieldCheck size={28} className="text-secondary group-hover:scale-110 transition-transform" />
-          <div className="text-lg font-black text-foreground ">{displayUser.activeAuctions}</div>
-          <p className="text-sm text-foreground/70">Active Auctions</p>
+        <div className="flex flex-col items-center p-6 bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all group">
+          <ShieldCheck size={28} className="text-secondary group-hover:scale-110 transition-transform mb-2" />
+          <div className="text-xl font-black text-secondary ">{displayUser.activeAuctions}</div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Active Auctions</p>
         </div>
         
-        <div className="flex flex-col items-center p-2 bg-gradient-to-br from-surface/60 to-surface/30 rounded-3xl border border-surface/40 shadow-lg hover:shadow-xl hover:shadow-primary/20 transition-all group">
-          <Gavel size={28} className="text-green-500 group-hover:scale-110 transition-transform" />
-          <div className="text-lg font-black text-green-500 ">{displayUser.winningBids}</div>
-          <p className="text-sm text-foreground/70">Winning Bids</p>
+        <div className="flex flex-col items-center p-6 bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all group">
+          <Gavel size={28} className="text-primary group-hover:scale-110 transition-transform mb-2" />
+          <div className="text-xl font-black text-secondary ">{displayUser.winningBids}</div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Winning Bids</p>
         </div>
         
-        <div className="flex flex-col items-center p-2 bg-gradient-to-br from-surface/60 to-surface/30 rounded-3xl border border-surface/40 shadow-lg hover:shadow-xl hover:shadow-primary/20 transition-all group">
-          <TrendingUp size={28} className="text-purple-500 group-hover:scale-110 transition-transform" />
-          <div className="text-lg font-black text-purple-500 ">{displayUser.portfolioGrowth}</div>
-          <p className="text-xs  text-foreground/70">Growth</p>
+        <div className="flex flex-col items-center p-6 bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all group">
+          <TrendingUp size={28} className="text-primary group-hover:scale-110 transition-transform mb-2" />
+          <div className="text-xl font-black text-secondary ">{displayUser.portfolioGrowth}</div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Portfolio Growth</p>
         </div>
       </div>
     </section>

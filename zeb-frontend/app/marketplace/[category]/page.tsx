@@ -37,10 +37,8 @@ export default async function CategoryPage({
         <section className="pt-16 pb-8 px-6 max-w-7xl mx-auto border-b border-surface/50">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div>
-              <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-4">
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
-                  {title}
-                </span>
+              <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-4 text-slate-900 uppercase">
+                {title}
               </h1>
               <p className="text-lg text-foreground/70">
                 Explore the latest and greatest in {title.toLowerCase()}.
@@ -67,10 +65,10 @@ export default async function CategoryPage({
             {filters.map((filter, index) => (
               <button 
                 key={filter}
-                className={`flex-shrink-0 px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 snap-center
+                className={`flex-shrink-0 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-300 snap-center
                   ${index === 0 
-                    ? 'bg-primary text-[#131515] shadow-[0_0_15px_rgba(51,255,235,0.4)]' 
-                    : 'bg-surface/50 border border-surface text-foreground/80 hover:border-primary/50 hover:text-primary'
+                    ? 'bg-primary text-slate-900 shadow-lg shadow-primary/20 hover:bg-primary/80' 
+                    : 'bg-white border border-slate-100 text-slate-400 hover:border-primary/50 hover:text-primary'
                   }`}
               >
                 {filter}
@@ -78,10 +76,10 @@ export default async function CategoryPage({
             ))}
           </div>
           
-          <div className="flex bg-surface/30 p-1 rounded-full border border-surface flex-shrink-0">
-            <button className="px-6 py-1.5 rounded-full text-sm font-medium bg-secondary text-background shadow-[0_0_10px_rgba(218,65,103,0.3)]">All</button>
-            <button className="px-6 py-1.5 rounded-full text-sm font-medium text-foreground/70 hover:text-foreground transition-colors">For Sale</button>
-            <button className="px-6 py-1.5 rounded-full text-sm font-medium text-foreground/70 hover:text-foreground transition-colors">For Bid</button>
+          <div className="flex bg-white p-1 rounded-full border border-slate-100 flex-shrink-0 shadow-sm">
+            <button className="px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest bg-secondary text-white shadow-md">All</button>
+            <button className="px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">For Sale</button>
+            <button className="px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">For Bid</button>
           </div>
         </section>
 

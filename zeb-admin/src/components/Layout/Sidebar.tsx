@@ -22,7 +22,7 @@ export function Sidebar() {
   return (
     <div className="w-64 bg-white border-r border-gray-200 h-screen flex flex-col">
       <div className="h-16 flex items-center px-6 border-b border-gray-200">
-        <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
+        <h1 className="text-xl font-black text-primary uppercase tracking-tighter">
           ZEB Admin Flow
         </h1>
       </div>

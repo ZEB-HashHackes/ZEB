@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { UploadCloud, X, Loader2, AlertCircle } from 'lucide-react';
+import { UploadCloud, X, Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUploadArt } from '../../hooks/useUploadArt';
 import { useCreateAuction } from '../../hooks/useCreateAuction';
@@ -39,6 +39,9 @@ export function UploadArtModal({
   });
 
   const [preview, setPreview] = useState<string | null>(null);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [showFlaggedModal, setShowFlaggedModal] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'onchain' | 'success'>('idle');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -93,22 +96,30 @@ export function UploadArtModal({
       fd.append('minPrice', formData.minPrice);
 
       const result = await uploadMutation.mutateAsync(fd);
+      
+      if (result.status === "flagged") {
+        setUploadStatus('success');
+        setShowFlaggedModal(true);
+        return;
+      }
+
       const hash = result.hash || result.contentHash || result.art_hash || result.data?.hash;
       if (!hash) throw new Error('No hash returned from backend');
+      
+      setUploadStatus('onchain');
       // Register artwork on-chain
        await new Promise(resolve => setTimeout(resolve, 5000));
       // Fixed-price sale
       if (formData.listingType === 'sell') {
         const { listForSaleOnChain } = await import('../../lib/stellar');
         await listForSaleOnChain(hash, wallet.address, parseFloat(formData.minPrice));
-
       }
 
       // Auction
       if (formData.listingType === 'auction' && formData.auctionEndTime) {
         const { createAuctionOnChain } = await import('../../lib/stellar');
         const auctionEndSec = Math.floor(new Date(formData.auctionEndTime).getTime() / 1000);
-        await createAuctionOnChain(hash, wallet.address, Date.now(),auctionEndSec);
+        await createAuctionOnChain(hash, wallet.address, Date.now(), auctionEndSec);
 
         // Optional: backend mutation for auctions
         await createAuctionMutation.mutateAsync({
@@ -118,12 +129,18 @@ export function UploadArtModal({
         });
       }
 
-      alert('Artwork uploaded and listed successfully!');
+      setUploadStatus('success');
       resetForm();
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert((err as Error)?.message || 'An error occurred');
+      if (err.message?.includes("Duplicate") || err.response?.status === 409) {
+        setShowDuplicateModal(true);
+      } else {
+        alert(err.message || 'An error occurred');
+      }
+    } finally {
+      setUploadStatus('idle');
     }
   };
 
@@ -143,10 +160,10 @@ export function UploadArtModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-black">Upload Artwork</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            <X size={24} />
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Upload Artwork</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-900 group transition-colors">
+            <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
           </button>
         </div>
 
@@ -160,7 +177,7 @@ export function UploadArtModal({
               accept="image/*,video/*,audio/*"
               onChange={handleFileChange}
               required
-              className="w-full p-3 border rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              className="w-full p-4 border border-slate-100 rounded-2xl file:mr-4 file:py-2 file:px-6 file:rounded-full file:border-0 file:text-[10px] file:font-black file:uppercase file:tracking-widest file:bg-slate-900 file:text-white hover:file:bg-slate-800 transition-all"
             />
             <AnimatePresence>
               {preview && (
@@ -179,72 +196,74 @@ export function UploadArtModal({
           {/* Title */}
           <input
             type="text"
-            placeholder="Title *"
+            placeholder="Masterpiece Title *"
             value={formData.title}
             onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
-            className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full p-4 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all font-bold placeholder:text-slate-300"
             required
           />
 
           {/* Category */}
           <div>
-            <label className="block text-sm font-medium mb-2">Category</label>
+            <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 ml-1">Asset Category</label>
             <select
               value={formData.category}
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, category: e.target.value as FormDataType['category'] }))
               }
-              className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full p-4 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all font-bold appearance-none bg-white"
             >
-              <option value="image">Image</option>
-              <option value="video">Video</option>
-              <option value="audio">Audio</option>
+              <option value="image">Digital Image</option>
+              <option value="video">Motion Video</option>
+              <option value="audio">Sonic Audio</option>
             </select>
           </div>
 
           {/* Creator Address */}
           <div>
-            <label className="block text-sm font-medium mb-2">Creator</label>
+            <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 ml-1">Creator Origin</label>
             <input
               type="text"
               value={wallet?.address || ''}
               readOnly
-              className="w-full p-3 bg-gray-100 rounded-xl text-xs font-mono truncate"
+              className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-[10px] font-black text-slate-400 tracking-tight cursor-not-allowed"
             />
           </div>
 
           {/* Listing Type */}
-          <div className="flex gap-6 p-3 bg-gray-50 rounded-xl">
-            <label className="flex items-center gap-2 cursor-pointer">
+          <div className="flex gap-4 p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+            <label className="flex-1 flex items-center justify-center gap-3 cursor-pointer p-4 rounded-xl transition-all border border-transparent hover:bg-white">
               <input
                 type="radio"
+                className="w-5 h-5 accent-primary"
                 checked={formData.listingType === 'sell'}
                 onChange={() => setFormData((prev) => ({ ...prev, listingType: 'sell' }))}
               />
-              <span>Sell (Fixed Price)</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Direct Sale</span>
             </label>
-            <label className="flex items-center gap-2 cursor-pointer">
+            <label className="flex-1 flex items-center justify-center gap-3 cursor-pointer p-4 rounded-xl transition-all border border-transparent hover:bg-white">
               <input
                 type="radio"
+                className="w-5 h-5 accent-primary"
                 checked={formData.listingType === 'auction'}
                 onChange={() => setFormData((prev) => ({ ...prev, listingType: 'auction' }))}
               />
-              <span>Auction</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Live Auction</span>
             </label>
           </div>
 
           {/* Price */}
           {formData.listingType === 'sell' && (
             <div>
-              <label className="block text-sm font-medium mb-2">Fixed Price (XLM) *</label>
+              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 ml-1">Asset Value (XLM) *</label>
               <input
                 type="number"
                 min="0"
                 step="0.1"
-                placeholder="0.0"
+                placeholder="0.00"
                 value={formData.minPrice}
                 onChange={(e) => setFormData((prev) => ({ ...prev, minPrice: e.target.value }))}
-                className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full p-4 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all font-black text-2xl"
                 required
               />
             </div>
@@ -252,29 +271,29 @@ export function UploadArtModal({
 
           {/* Auction fields */}
           {formData.listingType === 'auction' && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium mb-2">Starting Price (XLM) *</label>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 ml-1">Reserve Price (XLM) *</label>
                 <input
                   type="number"
                   min="0"
                   step="0.1"
-                  placeholder="0.0"
+                  placeholder="0.00"
                   value={formData.minPrice}
                   onChange={(e) => setFormData((prev) => ({ ...prev, minPrice: e.target.value }))}
-                  className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full p-4 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all font-black text-2xl"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Auction End *</label>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 ml-1">Auction Expiry *</label>
                 <input
                   type="datetime-local"
                   value={formData.auctionEndTime}
                   min={new Date(Date.now() + 60 * 60 * 1000).toISOString().slice(0, 16)}
                   onChange={(e) => setFormData((prev) => ({ ...prev, auctionEndTime: e.target.value }))}
-                  className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full p-4 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all font-bold"
                   required
                 />
               </div>
@@ -282,27 +301,30 @@ export function UploadArtModal({
           )}
 
           {/* Buttons */}
-          <div className="flex gap-4 pt-4">
+          <div className="flex flex-col sm:flex-row gap-4 pt-8 border-t border-slate-50">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 bg-gray-200 hover:bg-gray-300 p-3 rounded-xl transition-colors font-medium"
+              className="flex-1 bg-slate-100 text-slate-400 font-black py-5 rounded-2xl border border-transparent hover:bg-slate-200 hover:text-slate-900 transition-all uppercase text-[10px] tracking-widest"
             >
-              Cancel
+              Cancel Mission
             </button>
 
             <button
               type="submit"
               disabled={uploadMutation.isPending || createAuctionMutation.isPending}
-              className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white p-3 rounded-xl flex items-center justify-center gap-2 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 bg-primary text-slate-900 font-black py-5 rounded-2xl hover:bg-primary/80 hover:shadow-2xl hover:shadow-primary/10 transition-all flex items-center justify-center gap-3 uppercase text-[10px] tracking-widest disabled:opacity-50"
             >
               {uploadMutation.isPending || createAuctionMutation.isPending ? (
                 <>
                   <Loader2 className="animate-spin w-5 h-5" />
-                  Uploading...
+                  Processing...
                 </>
               ) : (
-                'Upload & List'
+                <>
+                  <UploadCloud className="w-5 h-5" />
+                  Deploy Artwork
+                </>
               )}
             </button>
           </div>
@@ -322,6 +344,59 @@ export function UploadArtModal({
             )}
           </AnimatePresence>
         </form>
+
+        {/* MODALS */}
+        <AnimatePresence>
+          {showDuplicateModal && (
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-md z-[60] flex items-center justify-center p-6"
+            >
+              <div className="bg-white rounded-[40px] p-10 max-w-md w-full border border-red-100 shadow-2xl text-center">
+                <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                   <AlertCircle className="w-10 h-10 text-red-500" />
+                </div>
+                <h3 className="text-2xl font-black text-slate-900 mb-4">Duplicate Detected</h3>
+                <p className="text-sm font-bold text-slate-500 leading-relaxed mb-8">
+                  This exact masterpiece is already registered in the ZEB authorship engine by another creator.
+                </p>
+                <button 
+                  onClick={() => setShowDuplicateModal(false)}
+                  className="w-full py-4 bg-secondary text-white font-black rounded-2xl hover:bg-slate-800 transition-all"
+                >
+                  Understood
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {showFlaggedModal && (
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-md z-[60] flex items-center justify-center p-6"
+            >
+              <div className="bg-white rounded-[40px] p-10 max-w-md w-full border border-primary/20 shadow-2xl text-center">
+                <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 text-primary">
+                   <ShieldCheck className="w-10 h-10" />
+                </div>
+                <h3 className="text-2xl font-black text-slate-900 mb-4">Similarity Flagged</h3>
+                <p className="text-sm font-bold text-slate-500 leading-relaxed mb-6">
+                  Your work shows high similarity to an existing record. To protect authorship, it has been flagged for review.
+                </p>
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 mb-8">
+                   <p className="text-[10px] font-black uppercase text-secondary tracking-widest mb-1">Status: Pending Review</p>
+                   <p className="text-xs font-bold text-slate-400">Please wait 12-24 hours for our admins to verify authenticity.</p>
+                </div>
+                <button 
+                  onClick={() => { setShowFlaggedModal(false); onClose(); }}
+                  className="w-full py-4 bg-primary text-slate-900 font-black rounded-2xl hover:bg-primary/80 transition-all"
+                >
+                  Close & Wait
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </motion.div>
   );

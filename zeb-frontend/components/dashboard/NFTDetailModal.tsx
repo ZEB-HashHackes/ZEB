@@ -46,7 +46,7 @@ export default function NFTDetailModal({
         {/* Header */}
         <div className="sticky top-0 bg-surface/100 backdrop-blur-xl border-b border-surface/50 p-6 rounded-t-3xl">
           <div className="flex items-center justify-between">
-            <h2 className="text-3xl font-black bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight">
               {nft.title}
             </h2>
             <button
@@ -60,7 +60,7 @@ export default function NFTDetailModal({
 
         <div className="p-8 grid lg:grid-cols-2 gap-12 max-w-7xl mx-auto">
           {/* Image */}
-          <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-muted/50 to-transparent shadow-2xl">
+          <div className="relative rounded-3xl overflow-hidden bg-slate-50 shadow-2xl border border-slate-100">
             <Image
               src={nft.img}
               alt={nft.title}
@@ -103,7 +103,7 @@ export default function NFTDetailModal({
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2 p-4 bg-surface/50 backdrop-blur-xl rounded-2xl border border-surface/30">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-xl">
+                  <div className="p-2 bg-primary/10 rounded-xl">
                     <User size={20} className="text-primary" />
                   </div>
                   <div>
@@ -118,12 +118,12 @@ export default function NFTDetailModal({
               {nft.owner && (
                 <div className="space-y-2 p-4 bg-surface/50 backdrop-blur-xl rounded-2xl border border-surface/30">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-gradient-to-br from-green-500/20 rounded-xl">
-                      <Shield size={20} className="text-green-500" />
+                    <div className="p-2 bg-secondary/10 rounded-xl">
+                      <Shield size={20} className="text-secondary" />
                     </div>
                     <div>
                       <h4 className="font-bold text-foreground/90">Current Owner</h4>
-                      <p className="text-green-500 font-mono font-semibold text-sm bg-surface/70 px-2 py-1 rounded-lg">
+                      <p className="text-secondary font-mono font-semibold text-sm bg-surface/70 px-2 py-1 rounded-lg">
                         {nft.owner}
                       </p>
                     </div>
@@ -134,23 +134,25 @@ export default function NFTDetailModal({
 
             {/* Price */}
             {nft.price && (
-              <div className="p-6 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-3xl">
+              <div className="p-6 bg-slate-50 border border-slate-100 rounded-3xl">
                 <div className="flex items-center gap-3">
-                  <DollarSign size={24} className="text-green-500" />
+                  <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center">
+                    <span className="font-black text-primary text-xs">XLM</span>
+                  </div>
                   <div>
-                    <p className="text-sm text-green-400 font-mono uppercase tracking-wider">Value</p>
-                    <p className="text-3xl font-black text-green-500">{nft.price}</p>
+                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">Asset Value</p>
+                    <p className="text-3xl font-black text-slate-900">{nft.price}</p>
                   </div>
                 </div>
               </div>
             )}
 
             {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-surface/30">
+            <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-slate-100">
               {isCreatedByMe && (
                 <button
                   onClick={() => onEdit(nft.id)}
-                  className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold py-4 px-6 rounded-2xl hover:shadow-lg hover:shadow-blue-500/25 transition-all flex items-center justify-center gap-2"
+                  className="flex-1 bg-slate-100 text-slate-900 font-black py-4 px-6 rounded-2xl hover:bg-slate-200 transition-all flex items-center justify-center gap-2"
                 >
                   <Edit2 size={20} />
                   Edit Artwork
@@ -159,14 +161,14 @@ export default function NFTDetailModal({
               {isOwnedByMe && (
                 <button
                   onClick={() => onSale(nft.id)}
-                  className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-4 px-6 rounded-2xl hover:shadow-lg hover:shadow-green-500/25 transition-all flex items-center justify-center gap-2"
+                  className="flex-1 bg-primary text-slate-900 font-black py-4 px-6 rounded-2xl hover:bg-primary/80 hover:shadow-xl hover:shadow-primary/20 transition-all flex items-center justify-center gap-2"
                 >
-                  <DollarSign size={20} />
+                  <Tag size={20} />
                   List for Sale
                 </button>
               )}
               {!isOwnedByMe && (
-                <button className="flex-1 bg-gradient-to-r from-primary/80 to-secondary/80 text-background/90 font-bold py-4 px-6 rounded-2xl hover:shadow-lg transition-all opacity-50 cursor-not-allowed">
+                <button className="flex-1 bg-slate-200 text-slate-400 font-black py-4 px-6 rounded-2xl cursor-not-allowed">
                   Collect
                 </button>
               )}
