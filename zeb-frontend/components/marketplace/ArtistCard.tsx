@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import React from 'react';
 
-interface ArtistCardProps {
+export interface ArtistCardProps {
   avatar?: string;
   name: string;
   artworksCount: number;

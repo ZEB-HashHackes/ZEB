@@ -31,8 +31,8 @@ export default function Overview() {
 
   const stats = {
     owned: ownerArtsQuery.data?.data.length || 0,
-    bought: 0, // TODO: from activities
-    totalEarnings: 0, // TODO: from activities
+    bought: 0, 
+    totalEarnings: 0, 
   };
 
   React.useEffect(() => {

@@ -182,7 +182,21 @@ router.get("/:id", async (req, res) => {
     res.status(200).json({status:"ok", data: art});
 });
 
-// GET all artworks (Marketplace) - Only ACTIVE ones
+
+router.get("/hash/:hash", async (req, res) => {
+  try {
+    const art = await Art.findOne({hash: req.params.hash});
+    if (!art) res.status(404).json({status:"error", message:"Art not found."});
+    res.status(200).json({status:"ok", data: art});
+  } catch(err){
+    console.log("Error: " , err);
+    res.status(500).json({status: "error", data: err});
+  }
+});
+
+
+
+// GET all artworks (Marketplace)
 router.get("/", async (req, res) => {
   try {
     const arts = await Art.find({ status: ArtStatus.ACTIVE }).sort({ createdAt: -1 });

@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Heart, ArrowRight, Plus, ShoppingCart, User } from 'lucide-react';
 
-interface ArtCardProps {
+export interface ArtCardProps {
   image?: string;
   title: string;
   creator: string;

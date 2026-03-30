@@ -94,27 +94,25 @@ export function UploadArtModal({
       const result = await uploadMutation.mutateAsync(fd);
       const hash = result.hash || result.contentHash || result.art_hash || result.data?.hash;
       if (!hash) throw new Error('No hash returned from backend');
-
       // Register artwork on-chain
-      const { registerArtworkOnChain } = await import('../../lib/stellar');
-      await registerArtworkOnChain(formData.title, hash, wallet.address);
-
+       await new Promise(resolve => setTimeout(resolve, 5000));
       // Fixed-price sale
       if (formData.listingType === 'sell') {
         const { listForSaleOnChain } = await import('../../lib/stellar');
         await listForSaleOnChain(hash, wallet.address, parseFloat(formData.minPrice));
+
       }
 
       // Auction
       if (formData.listingType === 'auction' && formData.auctionEndTime) {
         const { createAuctionOnChain } = await import('../../lib/stellar');
         const auctionEndSec = Math.floor(new Date(formData.auctionEndTime).getTime() / 1000);
-        await createAuctionOnChain(hash, wallet.address, auctionEndSec);
+        await createAuctionOnChain(hash, wallet.address, Date.now(),auctionEndSec);
 
         // Optional: backend mutation for auctions
         await createAuctionMutation.mutateAsync({
           art_hash: hash,
-          seller: wallet.address,
+          seller: wallet.address, 
           end_time: auctionEndSec * 1000,
         });
       }
