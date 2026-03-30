@@ -5,9 +5,15 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { Clock, Info, ShoppingCart, Gavel, Sparkles } from 'lucide-react'
 import { useParams } from 'next/navigation'
-import {ArtCardProps} from '../../../components/marketplace/ArtCard'
-import {ArtistCardProps} from '../../../components/marketplace/ArtistCard'
-import { buynow } from '../../../lib/stellar.ts'
+import { buynow } from '../../../lib/stellar'
+
+interface ArtistCardProps {
+  id?: string
+  username?: string
+  name?: string
+  avatar?: string
+  // Add other properties as needed
+}
 
 
 interface ArtCardProps {
@@ -21,9 +27,14 @@ interface ArtCardProps {
   description?: string
   saleType?: 'sale' | 'bid'
   bidders?: number
+  fileType?: string
+  filePath?: string
+  creatorBy?: string
+  minPrice?: string
+  contentHash?: string
 }
 
-const handleBuy = async (hash, buyer) => {
+const handleBuy = async (hash: string, buyer: string) => {
   try {
     if (!buyer) {
       alert('Connect wallet first')
@@ -99,12 +110,11 @@ export default function ArtworkDetailPage() {
 
   // 🔥 fix image path
    
- const imageUrl = art.fileType === "image"? `http://localhost:5000/${art.filePath}` : ""
+  const imageUrl = art.fileType === "image"? `http://localhost:5000/${art.filePath}` : ""
  const creatorname = creator != null ? creator.username : art.creatorBy;
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       <Navbar showSearch={true} />
-
       <main className="flex-grow pt-32 pb-24 max-w-7xl mx-auto px-6 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start mb-24">
           
@@ -175,7 +185,7 @@ export default function ArtworkDetailPage() {
 
               {/* ACTIONS */}
               <div className="flex flex-col gap-4">
-                <button onClick={() => handleBuy(art.contentHash,buyer)} className="w-full py-5 bg-cyan-400 text-slate-900 font-black rounded-[20px] text-sm hover:bg-cyan-500 transition-all">
+                <button onClick={() => handleBuy(art.contentHash || '', buyer)} className="w-full py-5 bg-cyan-400 text-slate-900 font-black rounded-[20px] text-sm hover:bg-cyan-500 transition-all">
                   Buy Now
                 </button>
 
@@ -203,4 +213,4 @@ export default function ArtworkDetailPage() {
       <Footer />
     </div>
   )
-}
+} 

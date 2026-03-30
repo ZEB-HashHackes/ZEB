@@ -11,7 +11,7 @@ import {
 
 export const RPC_URL = "https://soroban-testnet.stellar.org";
 export const NETWORK_PASSPHRASE = Networks.TESTNET;
-export const CONTRACT_ID = "CADX4ROQ7XXRDRSEVIFCCEW3U52WDUGN4QIPT6YHFY2OXR3WNBKTGQXO";
+export const CONTRACT_ID = "CBTT66HPQOKULVQCHXOTGYTOWLS72XYRRJJAWHGL6V6KJVHTGD7PDZWF";
 
 export const server = new rpc.Server(RPC_URL);
 export const contract = new Contract(CONTRACT_ID);
