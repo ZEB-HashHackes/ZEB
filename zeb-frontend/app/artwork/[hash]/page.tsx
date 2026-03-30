@@ -82,6 +82,7 @@ export default function ArtworkDetailPage() {
 
       console.log('Transaction success:', tx)
       alert("Purchase successful!")
+      updateEarnings(art.creatorBy, art.minPrice);
     } catch (err: any) {
       console.error('Buy failed:', err)
       alert(`Buy failed: ${err.message}`)
@@ -89,6 +90,25 @@ export default function ArtworkDetailPage() {
       setActionLoading(false)
     }
   }
+
+  const updateEarnings = async (pkey: string, amount: number) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/users/update-earning/${pkey}`, {
+        method: 'PUT', // or POST depending on your route definition
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ amount })
+      });
+
+      const result = await response.json();
+      if (result.status === 'ok') {
+        console.log("Earnings updated in database");
+      }
+    } catch (err) {
+      console.error("Failed to update database earnings:", err);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -195,8 +215,9 @@ export default function ArtworkDetailPage() {
                   <Clock size={16} />
                   <span className="text-xs font-bold">
                     Ends In:{' '}
-                    <span className="text-slate-900 uppercase">
-                      {art.timer || 'TBD'}
+
+                    <span className="text-slate-900">
+                      {art.auctionEndTime || 'N/A'}
                     </span>
                   </span>
                 </div>

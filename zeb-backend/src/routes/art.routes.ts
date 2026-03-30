@@ -29,6 +29,7 @@ router.post("/", upload.single("file"), async (req, res) => {
       saleType,
       creatorBy,
       ownedBy,
+      auctionEndTime,
       category = "image",
       minPrice = "0"
     } = req.body;
@@ -105,6 +106,7 @@ router.post("/", upload.single("file"), async (req, res) => {
       filePath: serviceFilePath,
       fileType,
       saleType,
+      auctionEndTime,
       mimeType,
       contentHash,
       similarityHash,

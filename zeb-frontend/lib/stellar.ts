@@ -11,7 +11,7 @@ import {
 
 export const RPC_URL = "https://soroban-testnet.stellar.org";
 export const NETWORK_PASSPHRASE = Networks.TESTNET;
-export const CONTRACT_ID = "CBTT66HPQOKULVQCHXOTGYTOWLS72XYRRJJAWHGL6V6KJVHTGD7PDZWF";
+export const CONTRACT_ID = "CDWIKLV3ZZ2JVBFVFKD37TMALWOSBHE5J2HK6E2D33EZ7VPQLQ3KCNNQ";
 
 export const server = new rpc.Server(RPC_URL);
 export const contract = new Contract(CONTRACT_ID);
@@ -192,7 +192,7 @@ export async function placeBidOnChain(
           nativeToScVal(BigInt(Date.now()), { type: "u128" })
         )
       )
-      .setTimeout(60)
+      .setTimeout(1000)
       .build();
 
     const prepared = await server.prepareTransaction(tx);

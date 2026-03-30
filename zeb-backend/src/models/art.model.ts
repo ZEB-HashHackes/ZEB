@@ -33,6 +33,8 @@ export interface IArt extends Document {
   similarityHash?: string | null;
   similarityMethod: SimilarityMethod;
   status: ArtStatus;
+  auctionStartTime: Date;
+  auctionEndTime: Date;
   creatorBy: string;
   ownedBy: string;
   category: string;
@@ -48,6 +50,8 @@ const artSchema: Schema<IArt> = new Schema<IArt>({
   saleType: {type: String, enum: ["sell", "auction"]},
   fileType: {type: String, enum: Object.values(FileType), required: true},
   mimeType: {type: String, required: true},
+  auctionStartTime: {type: Date, default: Date.now},
+  auctionEndTime: {type: Date},
   contentHash: {type: String, required: true, unique: true},
   similarityHash: {type: String},
   similarityMethod: {type: String, enum: Object.values(SimilarityMethod), default: SimilarityMethod.NONE},

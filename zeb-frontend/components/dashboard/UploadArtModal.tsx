@@ -94,6 +94,7 @@ export function UploadArtModal({
       fd.append('ownedBy', wallet.address);
       fd.append('category', formData.category);
       fd.append('minPrice', formData.minPrice);
+      fd.append('auctionEndTime', formData.auctionEndTime);
 
       const result = await uploadMutation.mutateAsync(fd);
       

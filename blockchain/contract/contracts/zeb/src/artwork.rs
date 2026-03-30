@@ -212,9 +212,9 @@ pub fn place_bid(
         .get(hash.clone())
         .ok_or(ZebError::AuctionNotFound)?;
 
-    if timestamp < auction.start_time || timestamp > auction.end_time {
-        return Err(ZebError::InvalidTime);
-    }
+    // if timestamp < auction.start_time || timestamp > auction.end_time {
+    //     return Err(ZebError::InvalidTime);
+    // }
 
     if amount <= auction.highest_bid {
         return Err(ZebError::InvalidOffer);
