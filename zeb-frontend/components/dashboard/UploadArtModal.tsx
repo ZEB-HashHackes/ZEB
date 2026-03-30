@@ -137,8 +137,11 @@ export function UploadArtModal({
       console.error(err);
       if (err.message?.includes("Duplicate") || err.response?.status === 409) {
         setShowDuplicateModal(true);
+      } else if (err.message?.includes("registered on the ZEB blockchain")) {
+        // Specific handling for the mapped contract error
+        alert(err.message);
       } else {
-        alert(err.message || 'An error occurred');
+        alert(err.message || 'An error occurred during deployment');
       }
     } finally {
       setUploadStatus('idle');

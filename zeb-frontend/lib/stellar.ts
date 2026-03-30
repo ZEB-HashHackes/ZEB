@@ -26,6 +26,25 @@ export function hexToBytes32(hex: string) {
   return nativeToScVal(bytes, { type: "bytes" });
 }
 
+/**
+ * Maps cryptic Soroban contract errors to user-friendly messages.
+ */
+export function mapContractError(err: any): string {
+  const message = err.message || String(err);
+  
+  if (message.includes("Error(Contract, #1)")) {
+    return "This artwork is already registered on the ZEB blockchain by another creator.";
+  }
+  if (message.includes("Error(Contract, #2)")) {
+    return "Unauthorized: You do not have permission to modify this asset.";
+  }
+  if (message.includes("Error(Contract, #4)")) {
+    return "Insufficient funds or allowance to complete this transaction.";
+  }
+  
+  return message.replace("HostError: ", "");
+}
+
 export async function registerArtworkOnChain(
   title: string,
   hash: string,
@@ -68,9 +87,9 @@ export async function registerArtworkOnChain(
     }
 
     return sendResult.hash;
-  } catch (err) {
+  } catch (err: any) {
     console.error("On-chain registration error:", err);
-    throw err;
+    throw new Error(mapContractError(err));
   }
 }
 

@@ -185,20 +185,33 @@ router.post("/register", async (req, res) => {
 
 
 router.get("/:id", async (req, res) => {
-     if (!Types.ObjectId.isValid(req.params.id)) {
-      return res.status(400).json({ status: "error", message: "Invalid ID" });
+    try {
+      const { id } = req.params;
+      let art;
+      
+      if (Types.ObjectId.isValid(id)) {
+        art = await Art.findById(id);
+      } else {
+        // Fallback for frontend that uses contentHash for routing
+        art = await Art.findOne({ contentHash: id });
+      }
+
+      if (!art) {
+        return res.status(404).json({ status: "error", message: "Art not found." });
+      }
+      
+      res.status(200).json({ status: "ok", data: art });
+    } catch (err) {
+      res.status(500).json({ status: "error", message: "Error fetching artwork detail" });
     }
-    const art = await Art.findById(req.params.id);
-    if (!art) res.status(404).json({status:"error", message:"Art not found."});
-    res.status(200).json({status:"ok", data: art});
 });
 
 
 router.get("/hash/:hash", async (req, res) => {
   try {
-    const art = await Art.findOne({hash: req.params.hash});
-    if (!art) res.status(404).json({status:"error", message:"Art not found."});
-    res.status(200).json({status:"ok", data: art});
+    const art = await Art.findOne({ contentHash: req.params.hash });
+    if (!art) return res.status(404).json({ status: "error", message: "Art not found." });
+    res.status(200).json({ status: "ok", data: art });
   } catch(err){
     console.log("Error: " , err);
     res.status(500).json({status: "error", data: err});

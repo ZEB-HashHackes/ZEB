@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AdminLayout } from './components/Layout/AdminLayout';
-import { Dashboard } from './pages/Dashboard';
+import  Dashboard  from './pages/Dashboard';
 import { RevenueView } from './pages/RevenueView';
 import { ArtworkFlags } from './pages/ArtworkFlags';
 

@@ -1,10 +1,11 @@
-import { ArrowUpRight, Copy, HandCoins, Users, Loader2, ShieldAlert, CheckCircle, XCircle, ExternalLink } from 'lucide-react';
+import { ArrowUpRight, Copy, HandCoins, Loader2, ShieldAlert, CheckCircle, XCircle } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '../services/api';
 
 const COLORS = ['#33FFEB', '#0A0E14', '#64748b'];
 
+export default function Dashboard() {
   const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
@@ -13,7 +14,7 @@ const COLORS = ['#33FFEB', '#0A0E14', '#64748b'];
     refetchInterval: 10000, 
   });
 
-  const { data: flaggedArts, isLoading: flaggedLoading } = useQuery({
+  const { data: flaggedArts } = useQuery({
     queryKey: ['flagged-arts'],
     queryFn: adminApi.getFlaggedArtworks,
     refetchInterval: 10000,
@@ -45,7 +46,7 @@ const COLORS = ['#33FFEB', '#0A0E14', '#64748b'];
   }
 
   const stats = data?.stats || {};
-  const totalRevenue = Object.values(stats).reduce((acc: number, curr: any) => acc + curr.total, 0);
+  const totalRevenue = Object.values(stats).reduce((acc: number, curr: any) => acc + (curr.total || 0), 0);
   
   const revenueDistribution = [
     { name: 'Registration', value: stats.registration?.total || 0 },
@@ -170,7 +171,7 @@ const COLORS = ['#33FFEB', '#0A0E14', '#64748b'];
                                   >
                                      <XCircle size={18} />
                                   </button>
-                               </div>
+                                </div>
                             </td>
                          </tr>
                       ))}
@@ -260,7 +261,7 @@ const COLORS = ['#33FFEB', '#0A0E14', '#64748b'];
             <div className="mt-8 p-4 bg-slate-50 rounded-2xl border border-slate-100">
                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 text-center">Primary Source</p>
                <p className="text-md font-black text-secondary text-center uppercase">
-                  {revenueDistribution.sort((a,b) => b.value - a.value)[0].name}
+                  {revenueDistribution.length > 0 ? revenueDistribution.sort((a,b) => b.value - a.value)[0].name : 'N/A'}
                </p>
             </div>
           </div>
@@ -268,8 +269,4 @@ const COLORS = ['#33FFEB', '#0A0E14', '#64748b'];
       </div>
     </div>
   );
-
-    </div>
-  );
 }
-

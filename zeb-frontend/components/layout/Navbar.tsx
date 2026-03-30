@@ -2,11 +2,13 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Search, User } from 'lucide-react';
+import { Search, User, LogIn, UserPlus, LogOut, LayoutDashboard, UserCircle } from 'lucide-react';
 import { useWallet } from '../../providers/WalletProvider';
+import { useAuth } from '../../providers/AuthProvider';
 
 export default function Navbar({ showSearch = false }: { showSearch?: boolean }) {
   const { wallet, connectWallet, disconnectWallet, isConnecting } = useWallet();
+  const { user, isAuthenticated, logout } = useAuth();
   
   return (
     <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
@@ -31,35 +33,66 @@ export default function Navbar({ showSearch = false }: { showSearch?: boolean })
               </div>
               <input 
                 type="text" 
-                placeholder="Search vault..." 
-                className="bg-slate-50 border border-slate-100 rounded-lg py-2 pl-9 pr-4 text-[10px] font-bold text-slate-900 placeholder:text-slate-300 focus:outline-none focus:border-cyan-400/30 transition-all w-64"
+                placeholder="Search..." 
+                className="bg-slate-50 border border-slate-100 rounded-lg py-2 pl-9 pr-4 text-[10px] font-bold text-slate-900 placeholder:text-slate-300 focus:outline-none focus:border-cyan-400/30 transition-all w-48"
               />
             </div>
           )}
-          <div className="flex items-center gap-2">
-            {wallet ? (
-              <>
-                <div className="flex items-center gap-1 text-xs bg-slate-100 px-2 py-1 rounded-full">
-                  <User size={12} />
-                  <span className="font-mono truncate max-w-[120px]">{wallet.address.slice(0,6)}...{wallet.address.slice(-4)}</span>
+
+          {/* New Auth Links */}
+          <div className="flex items-center gap-5">
+            {!isAuthenticated ? (
+              <div className="flex items-center gap-4 border-r border-slate-100 pr-4">
+                <Link href="/login" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all">
+                  <LogIn size={14} />
+                  Login
+                </Link>
+                <Link href="/signup" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all">
+                  <UserPlus size={14} />
+                  Signup
+                </Link>
+              </div>
+            ) : (
+              <div className="flex items-center gap-4 border-r border-slate-100 pr-4">
+                <Link href="/dashboard" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all">
+                  <LayoutDashboard size={14} />
+                  Dashboard
+                </Link>
+                <button 
+                  onClick={logout}
+                  className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-red-400 hover:text-red-600 transition-all"
+                >
+                  <LogOut size={14} />
+                  Logout
+                </button>
+              </div>
+            )}
+
+            <div className="flex items-center gap-2">
+              {wallet ? (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-full border border-slate-200">
+                  <UserCircle size={14} className="text-slate-500" />
+                  <span className="text-[10px] font-mono font-black text-slate-600 truncate max-w-[80px]">
+                    {wallet.address.slice(0, 4)}...{wallet.address.slice(-4)}
+                  </span>
+                  <button
+                    onClick={disconnectWallet}
+                    className="ml-1 text-slate-300 hover:text-red-500 transition-colors"
+                    title="Disconnect"
+                  >
+                    <LogOut size={12} />
+                  </button>
                 </div>
+              ) : (
                 <button
-                  onClick={disconnectWallet}
-                  className="px-3 py-1.5 bg-error/10 text-error text-xs font-black uppercase tracking-wide rounded-md hover:bg-error/20 transition-all border border-error/20"
+                  onClick={connectWallet}
+                  className="px-6 py-2.5 bg-primary text-slate-900 text-[10px] font-black uppercase tracking-[0.2em] rounded-lg shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
                   disabled={isConnecting}
                 >
-                  Disconnect
+                  {isConnecting ? 'Connecting...' : 'Connect Wallet'}
                 </button>
-              </>
-            ) : (
-              <button
-                onClick={connectWallet}
-                className="px-6 py-2.5 bg-primary text-slate-900 text-[10px] font-black uppercase tracking-[0.2em] rounded-lg hover:bg-primary/90 transition-all disabled:opacity-50"
-                disabled={isConnecting}
-              >
-                {isConnecting ? 'Connecting...' : 'Connect Wallet'}
-              </button>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
