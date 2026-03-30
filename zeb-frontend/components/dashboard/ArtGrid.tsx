@@ -108,10 +108,10 @@ export default function ArtGrid({ filter, title, emptyMessage, showMarketActions
           <h3 className="text-3xl font-black">{title} Empty</h3>
           <p className="text-xl text-foreground/50 max-w-md mx-auto leading-relaxed">{emptyMessage}</p>
           <Link
-            href={filter === 'owned' ? '/marketplace' : '/dashboard/upload'}
+            href="/dashboard/upload"
             className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-secondary text-background px-8 py-4 rounded-2xl font-black hover:shadow-2xl hover:shadow-primary/30 transition-all transform hover:-translate-y-1 active:scale-95"
           >
-            {filter === 'owned' ? 'Browse Marketplace' : 'Start Creating'}
+            Upload Artwork
           </Link>
         </div>
       )}

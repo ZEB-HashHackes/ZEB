@@ -4,6 +4,9 @@ import React, { useState, useEffect } from 'react'
 import {
   User, DollarSign, Image as ImageIcon, Briefcase, Activity, Plus
 } from 'lucide-react'
+import { useWallet } from '../../providers/WalletProvider'
+import { useDashboardArts } from '../../hooks/useDashboardArts'
+import { UploadArtModalTrigger } from './UploadArtModalTrigger'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 
@@ -21,57 +24,23 @@ const StatCard = ({ label, value, icon, trend }: { label: string; value: string;
 );
 
 export default function Overview() {
-  const [stats, setStats] = React.useState({
-    created: 0,
-    owned: 0,
-    bought: 0,
-    uploaded: 0,
-    totalEarnings: 0
-  });
-  const [username, setUsername] = React.useState('Arthemus');
-  const [loading, setLoading] = React.useState(true);
+  const creatorArtsQuery = useDashboardArts('creator');
+  const ownerArtsQuery = useDashboardArts('owner');
+  const { wallet } = useWallet();
+  const [username, setUsername] = useState('Creator');
+
+  const stats = {
+    owned: ownerArtsQuery.data?.data.length || 0,
+    bought: 0, // TODO: from activities
+    totalEarnings: 0, // TODO: from activities
+  };
 
   React.useEffect(() => {
-    const address = localStorage.getItem('zeb_user_address');
-    const storedUsername = localStorage.getItem('zeb_username');
-    if (storedUsername) setUsername(storedUsername);
-
-    if (address) {
-      fetchStats(address);
-    } else {
-      setLoading(false); // If no address, stop loading and show default 0s
+    if (wallet?.address) {
+      const stored = localStorage.getItem('zeb_username');
+      setUsername(stored || 'Creator');
     }
-  }, []);
-
-  const fetchStats = async (address: string) => {
-    try {
-      const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-      
-      // Fetch Created
-      const createdRes = await fetch(`${baseUrl}/arts/creator/${address}`);
-      const createdData = await createdRes.json();
-      
-      // Fetch Owned
-      const ownedRes = await fetch(`${baseUrl}/arts/owner/${address}`);
-      const ownedData = await ownedRes.json();
-
-      setStats({
-        created: createdData.data?.length || 0,
-        owned: ownedData.data?.length || 0,
-        bought: 0, // Mock for now until activity endpoint is ready
-        uploaded: createdData.data?.length || 0,
-        totalEarnings: (createdData.data || []).reduce((acc: number, art: any) => {
-          const val = parseFloat(art.minPrice) || 0;
-          // If value is huge (>= 1,000,000), it's likely Stroops (10^7 = 1 XLM)
-          return acc + (val >= 1000000 ? val / 10000000 : val);
-        }, 0)
-      });
-    } catch (err) {
-      console.error("Error fetching stats:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [wallet]);
 
   // Mock chart data
   const chartData = [30, 45, 35, 60, 55, 80, 75]
@@ -92,17 +61,15 @@ export default function Overview() {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
         >
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-2">Welcome back, {username}</h2>
+  <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-2">Welcome back, {username}</h2>
           <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Your creative empire is growing every day</p>
         </motion.div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatCard label="Total Earnings" value={`$${stats.totalEarnings.toFixed(2)}`} icon={<DollarSign size={18} className="text-emerald-500" />} trend="+12.5%" />
-        <StatCard label="Uploaded Assets" value={stats.uploaded.toString()} icon={<ImageIcon size={18} className="text-cyan-600" />} />
-        <StatCard label="Items Bought" value={stats.bought.toString()} icon={<Briefcase size={18} className="text-indigo-500" />} />
+        <StatCard label="Items Created" value={creatorArtsQuery.data?.data.length?.toString() || '0'} icon={<ImageIcon size={18} className="text-purple-500" />} />
         <StatCard label="Items Owned" value={stats.owned.toString()} icon={<User size={18} className="text-amber-500" />} />
-        <StatCard label="Created Now" value={stats.created.toString()} icon={<Plus size={18} className="text-rose-500" />} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -164,9 +131,7 @@ export default function Overview() {
                 <p className="text-sm font-black text-white">#12 Creator</p>
              </div>
           </div>
-          <Link href="/dashboard/upload" className="mt-8 py-4 bg-cyan-400 text-slate-900 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl text-center hover:bg-cyan-500 transition-all">
-             Mint New Asset
-          </Link>
+          <UploadArtModalTrigger />
           <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-cyan-400/10 blur-[80px] rounded-full" />
         </div>
       </div>
