@@ -1,8 +1,11 @@
-import fs from "fs";
-import path from "path";
+import { v2 as cloudinary } from "cloudinary";
 import { VerificationService } from "./verification.service.js";
-import Art from "../models/art.model.js";
 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME as string,
+  api_key:    process.env.CLOUDINARY_API_KEY as string,
+  api_secret: process.env.CLOUDINARY_API_SECRET as string,
+});
 
 export class ArtService {
 
@@ -11,25 +14,25 @@ export class ArtService {
       throw new Error("No file provided");
     }
 
-    const { fileType, contentHash, similarityHash, similarityMethod } = 
+    const { fileType, contentHash, similarityHash, similarityMethod } =
       await VerificationService.verify(file.buffer, file.mimetype);
 
-    // Note: Duplicate and similarity checks moved to routes to allow for "Resume Registration" flow
-    // (where the same creator can retry a failed upload).
-
-    const ext = file.mimetype.split("/")[1] || "png";
-    const fileName = `${contentHash}.${ext}`;
-    const uploadDir = path.resolve("uploads");
-
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir);
-    }
-
-    const filePath = path.join(uploadDir, fileName);
-
-    if (!fs.existsSync(filePath)) {
-      fs.writeFileSync(filePath, file.buffer);
-    }
+    // Upload to Cloudinary using a stream from the buffer
+    const uploadResult = await new Promise<{ secure_url: string }>((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: "zeb-arts",
+          public_id: contentHash,        // use content hash as stable ID
+          resource_type: "auto",         // handles image, video, raw
+          overwrite: false,              // skip re-upload if already exists
+        },
+        (error, result) => {
+          if (error || !result) return reject(error || new Error("Cloudinary upload failed"));
+          resolve(result as { secure_url: string });
+        }
+      );
+      uploadStream.end(file.buffer);
+    });
 
     return {
       contentHash,
@@ -37,7 +40,7 @@ export class ArtService {
       similarityMethod,
       fileType,
       mimeType: file.mimetype,
-      filePath: `uploads/${fileName}`
+      filePath: uploadResult.secure_url,   // permanent Cloudinary URL
     };
   }
 }
