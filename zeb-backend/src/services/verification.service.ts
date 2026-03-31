@@ -6,7 +6,7 @@ import { generateContentHash } from "../utils/verification/hashing.js";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
-import { FileType, SimilarityMethod } from "../models/art.model.js";
+import { FileType, SimilarityMethod } from "../models/Art.model.js";
 
 export interface VerificationResult {
   fileType: FileType;

@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import ArtCard from '@/components/marketplace/ArtCard';
-import { ChevronLeft, ChevronRight, ChevronDown, Search, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, Search, Loader2, AlertCircle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { getAuctions } from '@/lib/api';
 import { formatTimeLeft } from '@/lib/utils';
@@ -92,9 +92,24 @@ export default function AuctionsPage() {
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Loading live auctions...</p>
            </div>
         ) : error ? (
-           <div className="py-32 text-center">
-              <h3 className="text-xl font-black text-red-500 mb-2">Error loading auctions</h3>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Please check the backend connection.</p>
+           <div className="py-32 text-center bg-white rounded-[32px] border border-slate-100 shadow-sm">
+              <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center text-red-500 mx-auto mb-6">
+                 <AlertCircle size={32} />
+              </div>
+              <h3 className="text-xl font-black text-slate-900 mb-2">Service Temporarily Unavailable</h3>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest max-w-xs mx-auto">We're fine-tuning the auction engine. Please check back in a few minutes.</p>
+           </div>
+        ) : filteredAuctions.length === 0 ? (
+           <div className="py-32 text-center bg-white rounded-[32px] border border-slate-100 shadow-sm">
+              <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-200 mx-auto mb-6">
+                 <Search size={32} />
+              </div>
+              <h3 className="text-xl font-black text-slate-900 mb-2">No Active Auctions</h3>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest max-w-xs mx-auto">
+                 {search || activeCategory !== 'all' 
+                   ? "Try adjusting your filters or search terms to find what you're looking for." 
+                   : "The digital atelier is currently quiet. Check back soon for new masterpieces."}
+              </p>
            </div>
         ) : (
            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -111,16 +126,6 @@ export default function AuctionsPage() {
                   bidders={auction.bidders.length}
                />
              ))}
-           </div>
-        )}
-
-        {filteredAuctions.length === 0 && (
-           <div className="py-32 text-center">
-              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-slate-200 mx-auto mb-6 shadow-sm">
-                 <Search size={32} />
-              </div>
-              <h3 className="text-xl font-black text-slate-900 mb-2">No auctions found</h3>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Try adjusting your filters or search terms.</p>
            </div>
         )}
 

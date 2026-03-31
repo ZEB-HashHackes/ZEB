@@ -1,8 +1,47 @@
 import express from "express";
 import { Types } from "mongoose";
-import Auction from "../models/auction.model.js";
-import Art from "../models/art.model.js";
+import Auction from "../models/Auction.model.js";
+import Art from "../models/Art.model.js";
+import Activity, { ActivityType } from "../models/Activity.model.js";
+import { RevenueService } from "../services/revenue.service.js";
+import { RevenueType } from "../models/Revenue.model.js";
 const router = express.Router();
+/**
+ * GET ALL ACTIVE AUCTIONS
+ */
+router.get("/", async (req, res) => {
+    try {
+        const auctions = await Auction.aggregate([
+            {
+                $match: {
+                    end_time: { $gt: new Date() }
+                }
+            },
+            {
+                $lookup: {
+                    from: "arts",
+                    localField: "art_hash",
+                    foreignField: "contentHash",
+                    as: "artwork"
+                }
+            },
+            {
+                $unwind: "$artwork"
+            },
+            {
+                $sort: { start_time: -1 }
+            }
+        ]);
+        return res.status(200).json({
+            status: "ok",
+            data: auctions
+        });
+    }
+    catch (err) {
+        console.error("Error fetching auctions:", err);
+        return res.status(500).json({ status: "error", message: "error fetching auctions" });
+    }
+});
 router.post("/create", async (req, res) => {
     try {
         const { art_hash, seller, end_time } = req.body;
@@ -22,6 +61,13 @@ router.post("/create", async (req, res) => {
             end_time
         });
         await auction.save();
+        // LOG ACTIVITY: LISTING
+        await Activity.create({
+            type: ActivityType.LISTING,
+            artId: artwork._id,
+            from: seller,
+            timestamp: new Date()
+        });
         return res.status(201).json({
             status: "ok",
             message: "auction created",
@@ -54,6 +100,17 @@ router.put("/bid", async (req, res) => {
                 message: "invalid bid or auction not found"
             });
         }
+        const artwork = await Art.findOne({ contentHash: art_hash });
+        if (!artwork)
+            return res.status(404).json({ status: "error", message: "Artwork not found" });
+        // LOG ACTIVITY: BID
+        await Activity.create({
+            artId: artwork._id,
+            type: ActivityType.BID,
+            from: bidder,
+            amount: amount,
+            timestamp: new Date()
+        });
         return res.status(200).json({
             status: "ok",
             message: "bid placed",
@@ -100,7 +157,24 @@ router.delete("/close/:art_hash", async (req, res) => {
         }
         const closed = await Auction.findOneAndUpdate({ art_hash }, { $set: { end_time: new Date() } }, { new: true });
         if (closed && closed.highest_bidder) {
-            await Art.findOneAndUpdate({ contentHash: art_hash }, { $set: { ownedBy: closed.highest_bidder } });
+            const artwork = await Art.findOneAndUpdate({ contentHash: art_hash }, { $set: { ownedBy: closed.highest_bidder } });
+            // LOG REVENUE: 
+            // 1. Ownership Transfer Fee (Flat 5 ZEB)
+            await RevenueService.logRevenue(5, RevenueType.TRANSFER, closed.highest_bidder, undefined);
+            // 2. Bidding Commission (2.5% of final bid)
+            const commission = closed.highest_bid * 0.025;
+            await RevenueService.logRevenue(commission, RevenueType.BIDDING, closed.seller, undefined);
+            // LOG ACTIVITY: SALE
+            if (artwork) {
+                await Activity.create({
+                    type: ActivityType.SALE,
+                    artId: artwork._id,
+                    from: closed.seller,
+                    to: closed.highest_bidder,
+                    amount: closed.highest_bid,
+                    timestamp: new Date()
+                });
+            }
         }
         return res.status(200).json({
             status: "ok",

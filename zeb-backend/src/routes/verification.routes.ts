@@ -25,20 +25,9 @@ router.post("/verify", upload.single("file"), async (req, res) => {
       return res.status(400).json({ status: "error", message: "Missing required metadata fields." });
     }
 
-    const result = await VerificationService.verifyContent(req.file, {
-      title,
-      description,
-      creatorBy,
-      ownedBy,
-      category,
-      minPrice: Number(minPrice)
-    });
+    const result = await VerificationService.verify(req.file.buffer, req.file.mimetype);
 
-    if (result.status === "rejected") {
-      return res.status(409).json(result);
-    }
-
-    res.status(201).json(result);
+    res.status(200).json({ status: "ok", data: result });
 
   } catch (err) {
     console.error("Verification Error:", err);

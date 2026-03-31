@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
-import User from "../models/user.model.js";
+import User from "../models/User.model.js";
 
 const auth = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -11,7 +11,7 @@ const auth = async (req: Request, res: Response, next: NextFunction) => {
       return res.status(401).json({ status: "error", message: "User not found" });
     }
 
-    const matched = await bcrypt.compare(password, user.passwordHash);
+    const matched = await bcrypt.compare(password as string, user.passwordHash as string);
     if (!matched) {
       return res.status(401).json({ status: "error", message: "Invalid password" });
     }

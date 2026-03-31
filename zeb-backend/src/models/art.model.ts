@@ -2,6 +2,7 @@ import mongoose, {Schema, Document} from "mongoose";
 
 export enum ArtStatus {
   ACTIVE = "active",
+  PENDING = "pending",
   FLAGGED = "flagged",
   REJECTED = "rejected"
 }
@@ -33,6 +34,7 @@ export interface IArt extends Document {
   similarityHash?: string | null;
   similarityMethod: SimilarityMethod;
   status: ArtStatus;
+  isMinted: boolean;
   auctionStartTime: Date;
   auctionEndTime: Date;
   creatorBy: string;
@@ -55,7 +57,8 @@ const artSchema: Schema<IArt> = new Schema<IArt>({
   contentHash: {type: String, required: true, unique: true},
   similarityHash: {type: String},
   similarityMethod: {type: String, enum: Object.values(SimilarityMethod), default: SimilarityMethod.NONE},
-  status: {type: String, enum: Object.values(ArtStatus), default: ArtStatus.ACTIVE},
+  status: {type: String, enum: Object.values(ArtStatus), default: ArtStatus.PENDING},
+  isMinted: {type: Boolean, default: false},
   creatorBy: {type: String, required: true},
   ownedBy: {type: String, required: true},
   category: {type: String, 

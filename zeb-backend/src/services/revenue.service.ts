@@ -1,4 +1,4 @@
-import Revenue, { RevenueType } from "../models/revenue.model.js";
+import Revenue, { RevenueType } from "../models/Revenue.model.js";
 import mongoose from "mongoose";
 
 export class RevenueService {

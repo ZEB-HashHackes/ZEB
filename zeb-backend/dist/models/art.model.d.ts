@@ -1,6 +1,7 @@
 import mongoose, { Document } from "mongoose";
 export declare enum ArtStatus {
     ACTIVE = "active",
+    PENDING = "pending",
     FLAGGED = "flagged",
     REJECTED = "rejected"
 }
@@ -23,11 +24,15 @@ export interface IArt extends Document {
     description: string;
     filePath: string;
     fileType: FileType;
+    saleType: string;
     mimeType: string;
     contentHash: string;
-    similarityHash?: string;
+    similarityHash?: string | null;
     similarityMethod: SimilarityMethod;
     status: ArtStatus;
+    isMinted: boolean;
+    auctionStartTime: Date;
+    auctionEndTime: Date;
     creatorBy: string;
     ownedBy: string;
     category: string;
@@ -43,4 +48,4 @@ declare const _default: mongoose.Model<IArt, {}, {}, {}, mongoose.Document<unkno
     id: string;
 }, any, IArt>;
 export default _default;
-//# sourceMappingURL=art.model.d.ts.map
+//# sourceMappingURL=Art.model.d.ts.map

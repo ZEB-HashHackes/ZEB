@@ -130,6 +130,11 @@ export function UploadArtModal({
         });
       }
 
+      // CONFIRM ON BACKEND (Activate the record)
+      await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/arts/confirm/${hash}`, {
+        method: 'PUT',
+      });
+
       setUploadStatus('success');
       resetForm();
       onClose();

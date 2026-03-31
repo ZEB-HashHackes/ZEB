@@ -1,6 +1,6 @@
 import express from "express";
-import Art, { ArtStatus } from "../models/art.model.js";
-import Revenue from "../models/revenue.model.js";
+import Art, { ArtStatus } from "../models/Art.model.js";
+import Revenue from "../models/Revenue.model.js";
 import { RevenueService } from "../services/revenue.service.js";
 
 const router = express.Router();

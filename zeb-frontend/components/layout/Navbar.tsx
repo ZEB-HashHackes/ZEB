@@ -43,10 +43,7 @@ export default function Navbar({ showSearch = false }: { showSearch?: boolean })
           <div className="flex items-center gap-5">
             {!isAuthenticated ? (
               <div className="flex items-center gap-4 border-r border-slate-100 pr-4">
-                <Link href="/login" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all">
-                  <LogIn size={14} />
-                  Login
-                </Link>
+                
                 <Link href="/signup" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all">
                   <UserPlus size={14} />
                   Signup

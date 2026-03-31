@@ -9,4 +9,4 @@ const auctionSchema = new Schema({
     end_time: { type: Date, required: true }
 });
 export default mongoose.model("Auction", auctionSchema);
-//# sourceMappingURL=auction.model.js.map
+//# sourceMappingURL=Auction.model.js.map

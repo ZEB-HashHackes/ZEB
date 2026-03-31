@@ -1,12 +1,12 @@
 import express from "express";
-import Art, { ArtStatus } from "../models/art.model.js";
+import Art, { ArtStatus } from "../models/Art.model.js";
 import Activity, { ActivityType } from "../models/Activity.model.js";
 import {Types} from "mongoose";
 import multer from "multer";
 import { ArtService } from "../services/art.service.js";
 import { calculateHammingDistance } from "../utils/verification/image.js";
 import { RevenueService } from "../services/revenue.service.js";
-import { RevenueType } from "../models/revenue.model.js";
+import { RevenueType } from "../models/Revenue.model.js";
 
 const router = express.Router();
 
@@ -123,7 +123,7 @@ router.post("/", upload.single("file"), async (req, res) => {
       contentHash,
       similarityHash,
       similarityMethod,
-      status, // New: Use calculated status
+      status: ArtStatus.PENDING, 
       creatorBy,
       ownedBy,
       category,
@@ -307,9 +307,37 @@ router.put("/owner/:id", async (req, res) => {
     await RevenueService.logRevenue(5, RevenueType.TRANSFER, ownedBy, updated._id);
 
     res.status(200).json({status:"ok", message:"owner updated", data: updated.ownedBy});
-  }catch (err){
+  } catch (err){
     console.log("Error upadating owner", err);
     res.status(500).json({status: "error", message:"Error upadating owner", data : err});
+  }
+});
+
+// Confirm artwork on-chain (post-Stellar transaction)
+router.put("/confirm/:hash", async (req, res) => {
+  try {
+    const { hash } = req.params;
+    const updatedArt = await Art.findOneAndUpdate(
+      { contentHash: hash },
+      { 
+        status: ArtStatus.ACTIVE,
+        isMinted: true
+      },
+      { new: true }
+    );
+
+    if (!updatedArt) {
+      return res.status(404).json({ status: "error", message: "Artwork not found" });
+    }
+
+    res.status(200).json({ 
+      status: "ok", 
+      message: "Artwork confirmed on-chain", 
+      data: updatedArt 
+    });
+  } catch (err) {
+    console.error("Error confirming artwork:", err);
+    res.status(500).json({ status: "error", message: "Internal server error" });
   }
 });
 

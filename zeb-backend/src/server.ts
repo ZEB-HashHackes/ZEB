@@ -27,9 +27,8 @@ const PORT = process.env.PORT || 5000
 
 app.use("/api/users", users);
 app.use("/api/arts", arts);
-app.use("/api/verify/", verification);
-app.use("/api/auction/", auction);
-app.use("/api/auction", auctionRouter);
+app.use("/api/verify", verification);
+app.use("/api/auctions", auctionRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/activity", activityRouter);
 

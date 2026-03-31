@@ -83,8 +83,8 @@ export default function SignupPage() {
         localStorage.setItem('zeb_user_address', publicKey);
         localStorage.setItem('zeb_username', formData.username);
         
-        alert('Signup successful! Redirecting to dashboard...');
-        router.push('/dashboard');
+        alert('Signup successful! Redirecting to login...');
+        router.push('/login');
       } else {
         alert(`Signup failed: ${data.message || 'Unknown error'}`);
       }

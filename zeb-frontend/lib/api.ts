@@ -38,7 +38,7 @@ export async function getActivities(address: string): Promise<{ data: Activity[]
 }
 
 export async function createAuction(data: { art_hash: string; seller: string; end_time: number }) {
-  const res = await fetch(`${API_BASE}/auction/create`, {
+  const res = await fetch(`${API_BASE}/auctions/create`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -57,13 +57,13 @@ export async function getListings() {
 }
 
 export async function getAuctions(): Promise<{ data: AuctionWithArt[] }> {
-  const res = await fetch(`${API_BASE}/auction`);
+  const res = await fetch(`${API_BASE}/auctions`);
   if (!res.ok) throw new Error('Failed to fetch auctions');
   return res.json();
 }
 
 export async function getAuctionByArtHash(hash: string): Promise<{ data: Auction }> {
-  const res = await fetch(`${API_BASE}/auction/art/${hash}`);
+  const res = await fetch(`${API_BASE}/auctions/art/${hash}`);
   if (!res.ok) throw new Error('Failed to fetch auction details');
   return res.json();
 }

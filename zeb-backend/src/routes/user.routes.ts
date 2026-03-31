@@ -1,6 +1,6 @@
 import express from "express";
 import bcrypt from "bcrypt";
-import User from "../models/user.model.js";
+import User from "../models/User.model.js";
 import auth from "../middleware/auth.middleware.js"
 
 const router = express.Router();
@@ -18,7 +18,9 @@ router.post("/register", async (req, res) => {
     const user = new User({ username, passwordHash, publickey });
     await user.save();
 
-    res.status(201).json({ status: "ok", message: "User registered.", data: user });
+    const userJson = user.toObject();
+    delete userJson.passwordHash;
+    res.status(201).json({ status: "ok", message: "User registered.", data: userJson });
   } catch(err){
     console.error("Error creating user.", err);
     res.status(500).json({ status: "error", message: "Error creating user" });
@@ -34,14 +36,18 @@ router.post("/login-wallet", async (req, res) => {
       return res.status(404).json({ status: "error", message: "User not found" });
     }
 
-    res.json({ status: "ok", message: "Login successful", data: user });
+    const userJson = user.toObject();
+    delete userJson.passwordHash;
+    res.json({ status: "ok", message: "Login successful", data: userJson });
   } catch (err) {
     res.status(500).json({ status: "error", message: "Server error" });
   }
 });
 
 router.post("/login", auth, async (req, res) => {
-  res.json({ status: "ok", message: "Login successful", data: (req as any).user });
+  const userJson = (req as any).user.toObject();
+  delete userJson.passwordHash;
+  res.json({ status: "ok", message: "Login successful", data: userJson });
 });
 
 router.get("/check/:publickey", async (req, res) => {
@@ -59,7 +65,9 @@ router.get("/profile/:publickey", async (req, res) => {
     if (!user) {
       return res.status(404).json({ status: "error", message: "User not found" });
     }
-    res.json({ status: "ok", data: user });
+    const userJson = user.toObject();
+    delete userJson.passwordHash;
+    res.json({ status: "ok", data: userJson });
   } catch (err) {
     res.status(500).json({ status: "error", message: "Error fetching user" });
   }

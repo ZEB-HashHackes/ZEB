@@ -1,3 +1,4 @@
-target/
+dist/
+temp_frames/
 node_modules/
 .env

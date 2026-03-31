@@ -1,10 +1,10 @@
 import express from "express";
 import { Types } from "mongoose";
-import Auction from "../models/auction.model.js";
-import Art from "../models/art.model.js";
+import Auction from "../models/Auction.model.js";
+import Art from "../models/Art.model.js";
 import Activity, { ActivityType } from "../models/Activity.model.js";
 import { RevenueService } from "../services/revenue.service.js";
-import { RevenueType } from "../models/revenue.model.js";
+import { RevenueType } from "../models/Revenue.model.js";
 
 const router = express.Router();
 /**

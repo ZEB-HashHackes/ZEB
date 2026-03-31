@@ -16,4 +16,4 @@ declare const _default: mongoose.Model<IAuction, {}, {}, {}, mongoose.Document<u
     id: string;
 }, any, IAuction>;
 export default _default;
-//# sourceMappingURL=auction.model.d.ts.map
+//# sourceMappingURL=Auction.model.d.ts.map
