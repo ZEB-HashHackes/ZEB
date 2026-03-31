@@ -41,14 +41,26 @@ router.post("/", upload.single("file"), async (req, res) => {
       });
     }
 
+    const storeResult = await ArtService.storeFile(req.file);
+
+    // Fallback: derive fileType/mimeType from the upload if verification didn't set them
+    const resolvedMimeType = storeResult.mimeType || req.file!.mimetype || 'application/octet-stream';
+    const resolvedFileType = storeResult.fileType || (() => {
+      const m = resolvedMimeType;
+      if (m.startsWith('image/')) return 'image';
+      if (m.startsWith('video/')) return 'video';
+      if (m.startsWith('audio/')) return 'audio';
+      return 'text';
+    })();
+
     const {
       contentHash,
       similarityHash,
       similarityMethod,
-      fileType,
-      mimeType,
       filePath: serviceFilePath
-    } = await ArtService.storeFile(req.file);
+    } = storeResult;
+    const fileType = resolvedFileType;
+    const mimeType = resolvedMimeType;
 
     // 1. Check for Exact Duplicates (Content Hash)
     const exactExisting = await Art.findOne({ contentHash });
