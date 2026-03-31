@@ -42,7 +42,7 @@ npm install
 ### 3. Environment Configuration
 Create a `.env.local` file in the root of the frontend directory:
 ```env
-NEXT_PUBLIC_BACKEND_URL=https://your-backend-url.onrender.com/api
+NEXT_PUBLIC_BACKEND_URL=(https://zeb-1.onrender.com/api)
 ```
 
 ### 4. Launch Development Server
