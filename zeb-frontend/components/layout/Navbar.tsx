@@ -39,6 +39,7 @@ export default function Navbar({ showSearch = false }: { showSearch?: boolean })
             </div>
           )}
 
+
           {/* New Auth Links */}
           <div className="flex items-center gap-5">
             {!isAuthenticated ? (
