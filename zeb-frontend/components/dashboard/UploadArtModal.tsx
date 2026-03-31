@@ -96,16 +96,19 @@ export function UploadArtModal({
       fd.append('minPrice', formData.minPrice);
       fd.append('auctionEndTime', formData.auctionEndTime);
 
-      const result = await uploadMutation.mutateAsync(fd) as any;
+      const result = await uploadMutation.mutateAsync(fd);
       
+      if (result.status === "error") {
+        throw new Error(result.message);
+      }
+
       if (result.status === "flagged") {
         setUploadStatus('success');
         setShowFlaggedModal(true);
         return;
       }
 
-      const hash = result.hash || result.contentHash || result.art_hash || result.data?.hash;
-      if (!hash) throw new Error('No hash returned from backend');
+      const hash = result.hash;
       
       setUploadStatus('onchain');
       // Register artwork on-chain

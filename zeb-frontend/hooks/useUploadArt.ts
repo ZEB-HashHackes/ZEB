@@ -4,15 +4,10 @@ import { uploadArt } from '../lib/api';
 import { useWallet } from '../providers/WalletProvider';
 import { useCallback } from 'react';
 
-interface UploadResult {
-  status?: string;
-  artId?: string;
-  hash?: string;
-  contentHash?: string;
-  art_hash?: string;
-  data?: { hash: string; artId: string };
-  onchainTx?: string;
-}
+export type UploadResult = 
+  | { status: 'ok'; hash: string; artId: string; onchainTx?: string }
+  | { status: 'flagged'; hash: string; artId: string; onchainTx?: string }
+  | { status: 'error'; message: string };
 
 export function useUploadArt() {
   const queryClient = useQueryClient();
@@ -20,12 +15,21 @@ export function useUploadArt() {
 
   const mutationFn = useCallback(async (formData: FormData): Promise<UploadResult> => {
     // 1. Upload to backend/DB
-    const uploadResult = await uploadArt(formData);
+    const uploadRes = await uploadArt(formData);
     
-    // 2. Extract data
+    // The backend returns { status: 'ok'|'flagged', data: { artId, hash } }
+    if (uploadRes.status === 'error') {
+      return { status: 'error', message: uploadRes.message || 'Upload failed' };
+    }
+
+    // 2. Extract data safely using optional chaining / fallback
     const title = (formData.get('title') as string) || '';
-    const hash = uploadResult.data?.hash || uploadResult.contentHash || uploadResult.hash || uploadResult.art_hash;
-    if (!hash) throw new Error('No hash returned from upload');
+    const hash = uploadRes.data?.hash || uploadRes.contentHash || uploadRes.hash || uploadRes.art_hash;
+    const artId = uploadRes.data?.artId || uploadRes.artId || uploadRes._id;
+
+    if (!hash || !artId) {
+      throw new Error('Incomplete data received from backend');
+    }
     
     // 3. Optional: Register onchain (if wallet connected)
     let onchainTx: string | undefined;
@@ -35,8 +39,9 @@ export function useUploadArt() {
     }
     
     return {
-      ...uploadResult,
+      status: uploadRes.status as 'ok' | 'flagged',
       hash,
+      artId,
       onchainTx
     };
   }, [wallet]);
