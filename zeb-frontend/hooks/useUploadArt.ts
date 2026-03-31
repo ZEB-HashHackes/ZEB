@@ -5,6 +5,7 @@ import { useWallet } from '../providers/WalletProvider';
 import { useCallback } from 'react';
 
 interface UploadResult {
+  status?: string;
   artId?: string;
   hash?: string;
   contentHash?: string;
