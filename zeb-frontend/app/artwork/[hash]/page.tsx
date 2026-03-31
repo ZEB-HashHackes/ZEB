@@ -23,6 +23,7 @@ interface ArtCardData {
   minPrice?: string
   contentHash?: string
   creatorBy?: string
+  auctionEndTime?: string
 }
 
 export default function ArtworkDetailPage() {
@@ -82,7 +83,9 @@ export default function ArtworkDetailPage() {
 
       console.log('Transaction success:', tx)
       alert("Purchase successful!")
-      updateEarnings(art.creatorBy, art.minPrice);
+if (art.creatorBy && art.minPrice) {
+  updateEarnings(art.creatorBy, Number(art.minPrice));
+}
     } catch (err: any) {
       console.error('Buy failed:', err)
       alert(`Buy failed: ${err.message}`)
