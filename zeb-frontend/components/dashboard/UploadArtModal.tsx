@@ -96,7 +96,7 @@ export function UploadArtModal({
       fd.append('minPrice', formData.minPrice);
       fd.append('auctionEndTime', formData.auctionEndTime);
 
-      const result = await uploadMutation.mutateAsync(fd);
+      const result = await uploadMutation.mutateAsync(fd) as any;
       
       if (result.status === "flagged") {
         setUploadStatus('success');
