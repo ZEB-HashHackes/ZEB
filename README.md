@@ -1,4 +1,4 @@
-# ZEB: The Premium Digital Art Ecosystem 🎨✨
+# ZEB: The Premium Digital Art Ecosystem 
 
 **Stellar-Powered. AI-Protected. Institutional-Grade.**
 
